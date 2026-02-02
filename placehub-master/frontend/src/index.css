@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  /* Deep Navy */
+  --color-primary: #071952;
+  /* Deep Teal */
+  --color-secondary: #088395;
+  /* Bright Cyan/Teal */
+  --color-accent: #37B7C3;
+  /* Soft Ice Blue */
+  --color-background: #EBF4F6;
+
+  /* Setting the default sans font */
+  --font-sans: "Inter", "system-ui", "sans-serif";
+}
+
+/* Optional: Apply background color to the whole app */
+@layer base {
+  body {
+    @apply bg-background text-primary;
+  }
+}
