@@ -44,10 +44,13 @@ export const getQuestions = async (req, res) => {
     // Get profiles for question authors
     const questionsWithProfiles = await Promise.all(
       questions.map(async (q) => {
-        const profile = await Profile.findOne({ userId: q.userId._id })
+        const userId = q.userId?._id
+        const profile = userId ? await Profile.findOne({ userId }) : null
+
         const answersWithProfiles = await Promise.all(
-          q.answers.map(async (ans) => {
-            const ansProfile = await Profile.findOne({ userId: ans.userId._id })
+          (q.answers || []).map(async (ans) => {
+            const ansUserId = ans.userId?._id
+            const ansProfile = ansUserId ? await Profile.findOne({ userId: ansUserId }) : null
             return {
               ...ans.toObject(),
               userProfile: ansProfile,
@@ -92,10 +95,13 @@ export const getQuestionById = async (req, res) => {
     question.views += 1
     await question.save()
 
-    const profile = await Profile.findOne({ userId: question.userId._id })
+    const userId = question.userId?._id
+    const profile = userId ? await Profile.findOne({ userId }) : null
+
     const answersWithProfiles = await Promise.all(
-      question.answers.map(async (ans) => {
-        const ansProfile = await Profile.findOne({ userId: ans.userId._id })
+      (question.answers || []).map(async (ans) => {
+        const ansUserId = ans.userId?._id
+        const ansProfile = ansUserId ? await Profile.findOne({ userId: ansUserId }) : null
         return {
           ...ans.toObject(),
           userProfile: ansProfile,

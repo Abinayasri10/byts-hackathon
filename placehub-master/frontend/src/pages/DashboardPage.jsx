@@ -3,74 +3,68 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import MainLayout from '../components/MainLayout'
-import { TrendingUp, BookOpen, Users, Briefcase, ArrowRight, Star } from 'lucide-react'
+import { TrendingUp, BookOpen, Users, Briefcase, ArrowRight, Star, Calendar, Clock, Video } from 'lucide-react'
+import { meetingAPI } from '../services/api'
 
 function DashboardPage() {
   const [experiences, setExperiences] = useState([])
+  const [upcomingMeetings, setUpcomingMeetings] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-      setExperiences([
-        {
-          id: 1,
-          company: 'Google',
-          role: 'SDE Intern',
-          batch: '2024',
-          rating: 4.5,
-          difficulty: 'Hard',
-          image: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=400&h=250&fit=crop'
-        },
-        {
-          id: 2,
-          company: 'Microsoft',
-          role: 'Software Engineer',
-          batch: '2024',
-          rating: 4.3,
-          difficulty: 'Medium',
-          image: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=400&h=250&fit=crop'
-        },
-        {
-          id: 3,
-          company: 'Amazon',
-          role: 'SDE-2',
-          batch: '2023',
-          rating: 4.7,
-          difficulty: 'Hard',
-          image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&h=250&fit=crop'
-        },
-        {
-          id: 4,
-          company: 'Meta',
-          role: 'Software Engineer',
-          batch: '2023',
-          rating: 4.6,
-          difficulty: 'Hard',
-          image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop'
-        },
-        {
-          id: 5,
-          company: 'Apple',
-          role: 'SDE Intern',
-          batch: '2024',
-          rating: 4.8,
-          difficulty: 'Medium',
-          image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=250&fit=crop'
-        },
-        {
-          id: 6,
-          company: 'Tesla',
-          role: 'Software Engineer',
-          batch: '2023',
-          rating: 4.4,
-          difficulty: 'Hard',
-          image: 'https://images.unsplash.com/photo-1553877522-43269d1aaeb1?w=400&h=250&fit=crop'
-        },
-      ])
-      setLoading(false)
-    }, 500)
+    fetchData()
   }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      // Fetch meetings
+      try {
+        const meetingsRes = await meetingAPI.getMeetings({ type: 'upcoming', limit: 3 })
+        setUpcomingMeetings(meetingsRes.data || [])
+      } catch (err) {
+        console.error('Error fetching meetings:', err)
+      }
+
+      // Simulate fetching experiences (since we don't have a specific API for recent ones here)
+      // In a real app, this would be an API call
+      setTimeout(() => {
+        setExperiences([
+          {
+            id: 1,
+            company: 'Google',
+            role: 'SDE Intern',
+            batch: '2024',
+            rating: 4.5,
+            difficulty: 'Hard',
+            image: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=400&h=250&fit=crop'
+          },
+          {
+            id: 2,
+            company: 'Microsoft',
+            role: 'Software Engineer',
+            batch: '2024',
+            rating: 4.3,
+            difficulty: 'Medium',
+            image: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=400&h=250&fit=crop'
+          },
+          {
+            id: 3,
+            company: 'Amazon',
+            role: 'SDE-2',
+            batch: '2023',
+            rating: 4.7,
+            difficulty: 'Hard',
+            image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&h=250&fit=crop'
+          }
+        ])
+        setLoading(false)
+      }, 500)
+    } catch (err) {
+      console.error('Error in fetchData:', err)
+      setLoading(false)
+    }
+  }
 
   const materials = [
     { id: 1, title: 'DSA Complete Guide', downloads: 2340, category: 'Data Structures' },
@@ -181,6 +175,76 @@ function DashboardPage() {
           </div>
         </section>
 
+        {/* Upcoming Sessions Section */}
+        <section className="mb-16">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold text-primary">Your Upcoming Sessions</h2>
+            {upcomingMeetings.length > 0 && (
+              <Link to="/meetings" className="text-secondary font-semibold hover:text-accent hover:underline transition flex items-center gap-1">
+                View All <ArrowRight size={16} />
+              </Link>
+            )}
+          </div>
+
+          {upcomingMeetings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcomingMeetings.map((meeting) => (
+                <div key={meeting._id} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:border-accent transition-all relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary opacity-[0.03] rounded-bl-full group-hover:opacity-[0.06] transition-opacity"></div>
+
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-secondary/10 rounded-lg text-secondary">
+                      <Calendar size={20} />
+                    </div>
+                    <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+                      {new Date(meeting.scheduledAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-primary mb-2 line-clamp-1">{meeting.title}</h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {meeting.description || 'No description provided'}
+                  </p>
+
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock size={16} className="text-secondary" />
+                      <span>{new Date(meeting.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({meeting.duration} min)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users size={16} className="text-secondary" />
+                      <span>With {meeting.mentorId?._id === localStorage.getItem('userId') ? meeting.menteeProfile?.fullName : meeting.mentorProfile?.fullName}</span>
+                    </div>
+                  </div>
+
+                  <Link
+                    to={`/meeting/${meeting._id}`}
+                    className="w-full py-3 rounded-lg bg-primary text-white font-bold hover:bg-secondary transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                  >
+                    <Video size={18} /> Join Meeting
+                  </Link>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg p-12 border border-gray-100 text-center flex flex-col items-center justify-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6 text-gray-400">
+                <Calendar size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-700 mb-2">No upcoming meetings</h3>
+              <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                You don't have any mentorship sessions scheduled yet. Connect with a mentor to get started!
+              </p>
+              <Link
+                to="/mentorship"
+                className="px-8 py-3 rounded-lg bg-secondary text-white font-bold hover:bg-accent transition shadow-md hover:shadow-lg inline-flex items-center gap-2"
+              >
+                Find Mentors <ArrowRight size={18} />
+              </Link>
+            </div>
+          )}
+        </section>
+
         {/* Recent Experiences */}
         <section className="mb-16">
           <div className="flex justify-between items-center mb-8">
@@ -202,13 +266,13 @@ function DashboardPage() {
                   <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-accent opacity-10 group-hover:opacity-20 transition-opacity"></div>
                   <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-secondary opacity-15 group-hover:opacity-25 transition-opacity"></div>
                   <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-primary opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                  
+
                   <div className="p-6 relative z-10">
                     <div className="mb-4">
                       <h3 className="text-2xl font-bold text-primary mb-2">{exp.company}</h3>
                       <p className="text-gray-600 text-lg font-medium">{exp.role}</p>
                     </div>
-                    
+
                     <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
                       <span className="text-sm text-gray-500 font-medium bg-background px-3 py-1 rounded-full">
                         Batch {exp.batch}
@@ -218,17 +282,16 @@ function DashboardPage() {
                         <span className="font-semibold text-gray-700">{exp.rating}</span>
                       </div>
                     </div>
-                    
+
                     <div className="mb-4">
-                      <span className={`inline-block px-4 py-1.5 rounded-full text-xs font-semibold ${
-                        exp.difficulty === 'Hard' ? 'bg-red-50 text-red-700 border border-red-200' :
+                      <span className={`inline-block px-4 py-1.5 rounded-full text-xs font-semibold ${exp.difficulty === 'Hard' ? 'bg-red-50 text-red-700 border border-red-200' :
                         exp.difficulty === 'Medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                        'bg-green-50 text-green-700 border border-green-200'
-                      }`}>
+                          'bg-green-50 text-green-700 border border-green-200'
+                        }`}>
                         {exp.difficulty} Difficulty
                       </span>
                     </div>
-                    
+
                     <button className="w-full px-4 py-2.5 rounded-lg bg-secondary text-white font-semibold hover:bg-accent transition shadow-md hover:shadow-lg">
                       Read Experience
                     </button>

@@ -8,8 +8,12 @@ export const getAvailableMentors = async (req, res) => {
   try {
     const { domain, page = 1, limit = 10 } = req.query
 
+    // Get admin IDs to exclude
+    const admins = await User.find({ role: 'admin' }).distinct('_id')
+
     const query = {
       placementStatus: 'placed',
+      userId: { $nin: admins }
     }
 
     if (domain) {
@@ -40,8 +44,12 @@ export const getAvailableMentees = async (req, res) => {
   try {
     const { domain, page = 1, limit = 10 } = req.query
 
+    // Get admin IDs to exclude
+    const admins = await User.find({ role: 'admin' }).distinct('_id')
+
     const query = {
       placementStatus: 'not-placed',
+      userId: { $nin: admins }
     }
 
     if (domain) {
