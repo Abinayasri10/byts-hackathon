@@ -36,14 +36,21 @@ export const profileAPI = {
 
 // Experience APIs
 export const experienceAPI = {
-  create: (data) => api.post('/experience', data),
+  // New Methods
+  saveMetadata: (data) => api.post('/experience/metadata', data),
+  saveRounds: (experienceId, rounds) => api.post(`/experience/rounds/${experienceId}`, { rounds }),
+  saveMaterials: (experienceId, materials) => api.post(`/experience/materials/${experienceId}`, { materials }),
+  submit: (experienceId) => api.post(`/experience/submit/${experienceId}`),
+
+  // Existing/Updated Methods
   getAll: () => api.get('/experience/recent'),
   getMyExperiences: () => api.get('/experience/my'),
   getById: (id) => api.get(`/experience/${id}`),
-  update: (id, data) => api.put(`/experience/${id}`, data),
   delete: (id) => api.delete(`/experience/${id}`),
-  saveDraft: (data) => api.post('/experience/draft', data),
+
+  // Helper for loading draft state if needed (optional usage)
   getDraft: () => api.get('/experience/draft'),
+  getOptions: () => api.get('/experience/options'),
 }
 
 // Chat APIs
@@ -60,5 +67,8 @@ export const answerService = {
 export const sessionService = {
   init: (data) => api.post('/sessions/init', data),
 }
+
+
+
 
 export default api

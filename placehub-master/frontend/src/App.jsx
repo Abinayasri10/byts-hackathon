@@ -11,6 +11,7 @@ import ExperienceRoundsForm from './pages/ExperienceRoundsForm.jsx'
 import ExperienceMaterialsForm from './pages/ExperienceMaterialsForm.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import './App.css'
+
 function App() {
   return (
     <Router>
@@ -24,10 +25,6 @@ function App() {
         <Route
           path="/home"
           element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}
-        />
-        <Route
-          path="/sampleprofilepage"
-          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
         />
         <Route
           path="/profile"
@@ -53,6 +50,7 @@ function App() {
           path="/share-experience/materials"
           element={<ProtectedRoute><ExperienceMaterialsForm /></ProtectedRoute>}
         />
+
         <Route path="/" element={<Navigate to="/home" replace />} />
       </Routes>
     </Router>

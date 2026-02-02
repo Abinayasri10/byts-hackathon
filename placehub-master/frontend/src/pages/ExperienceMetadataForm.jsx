@@ -12,6 +12,7 @@ function ExperienceMetadataForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [autoSave, setAutoSave] = useState(true)
+  const [experienceId, setExperienceId] = useState(null) // ID returned from backend
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -27,54 +28,68 @@ function ExperienceMetadataForm() {
     outcome: 'in-process',
   })
 
-  const [companies] = useState([
-    'Google',
-    'Microsoft',
-    'Amazon',
-    'Meta',
-    'Apple',
-    'Goldman Sachs',
-    'Morgan Stanley',
-    'JP Morgan',
-    'Flipkart',
-    'Amazon',
-  ])
+  const [companies, setCompanies] = useState([])
+  const [roles, setRoles] = useState([])
 
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false)
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false)
+
+  // Fetch Options
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const res = await experienceAPI.getOptions()
+        if (res.data.success) {
+          // If the list is empty (first run), we might want some defaults, 
+          // or just leave it empty and let user type key ones.
+          // Let's seed with some defaults if empty just for good UX, or trust the array.
+          // User asked for "existing options", implied from DB.
+          const fetchedCompanies = res.data.companies.length > 0 ? res.data.companies : [
+            'Google', 'Microsoft', 'Amazon', 'Meta', 'Apple',
+            'Goldman Sachs', 'Morgan Stanley', 'JP Morgan', 'Flipkart'
+          ];
+          const fetchedRoles = res.data.roles.length > 0 ? res.data.roles : [
+            'Software Engineer', 'SDE Intern', 'Data Analyst', 'Product Manager'
+          ];
+
+          setCompanies(fetchedCompanies)
+          setRoles(fetchedRoles)
+        }
+      } catch (err) {
+        console.error("Failed to fetch options", err)
+      }
+    }
+    fetchOptions()
+  }, [])
 
   // Auto-save draft
   useEffect(() => {
-    if (!autoSave) return
+    if (!autoSave || !formData.companyName) return // Don't autosave empty forms
     const timer = setTimeout(() => {
-      saveDraft()
+      saveMetadata(true) // Silent save
     }, 3000)
     return () => clearTimeout(timer)
   }, [formData, autoSave])
 
-  // Load draft on mount
-  useEffect(() => {
-    loadDraft()
-  }, [])
-
-  const loadDraft = async () => {
+  const saveMetadata = async (silent = false) => {
     try {
-      const response = await experienceAPI.getDraft()
-      if (response.data.success && response.data.draft) {
-        setFormData({
-          ...formData,
-          ...response.data.draft,
-        })
+      // If we have an ID, include it to update
+      const payload = { ...formData, _id: experienceId }
+      const response = await experienceAPI.saveMetadata(payload)
+
+      if (response.data.success) {
+        setExperienceId(response.data.experienceId)
+        if (!silent) setSuccess('Metadata saved successfully!')
+        return response.data.experienceId
       }
     } catch (err) {
-      console.error('Failed to load draft:', err)
-    }
-  }
-
-  const saveDraft = async () => {
-    try {
-      await experienceAPI.saveDraft(formData)
-    } catch (err) {
-      console.error('Failed to save draft:', err)
+      if (!silent) {
+        console.error('Failed to save metadata:', err)
+        if (err.response?.status === 400) {
+          setError(err.response.data.message)
+        }
+      }
+      // Don't show error to user on auto-save to avoid annoyance
     }
   }
 
@@ -110,12 +125,17 @@ function ExperienceMetadataForm() {
     }
 
     try {
-      // Save metadata and move to next phase
-      await saveDraft()
-      setSuccess('Metadata saved! Proceeding to rounds...')
-      setTimeout(() => {
-        navigate('/share-experience/rounds')
-      }, 1500)
+      const id = await saveMetadata(false)
+      if (id) {
+        setSuccess('Metadata saved! Proceeding to rounds...')
+        setTimeout(() => {
+          navigate('/share-experience/rounds', { state: { experienceId: id } })
+        }, 1500)
+      } else {
+        // Error is handled in saveMetadata if it's not silent, but we might have failed silently before?
+        // Actually saveMetadata(false) sets error if 400.
+        // If id is missing, maybe just return
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save metadata')
     } finally {
@@ -133,7 +153,7 @@ function ExperienceMetadataForm() {
               <div className="lg:sticky lg:top-24">
                 <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                   <h3 className="text-lg font-bold text-primary mb-6">Progress</h3>
-                  
+
                   {/* Step 1 - Active */}
                   <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
@@ -199,326 +219,354 @@ function ExperienceMetadataForm() {
                 </p>
               </div>
 
-          {/* Error Alert */}
-          {error && (
-            <div className="mb-6 p-5 bg-red-50 border-l-4 border-red-500 rounded-xl flex gap-3 shadow-md animate-in fade-in-50">
-              <AlertCircle className="text-red-600 flex-shrink-0" size={24} />
-              <p className="text-red-700 font-medium">{error}</p>
-            </div>
-          )}
+              {/* Error Alert */}
+              {error && (
+                <div className="mb-6 p-5 bg-red-50 border-l-4 border-red-500 rounded-xl flex gap-3 shadow-md animate-in fade-in-50">
+                  <AlertCircle className="text-red-600 flex-shrink-0" size={24} />
+                  <p className="text-red-700 font-medium">{error}</p>
+                </div>
+              )}
 
-          {/* Success Alert */}
-          {success && (
-            <div className="mb-6 p-5 bg-green-50 border-l-4 border-green-500 rounded-xl shadow-md animate-in fade-in-50">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="text-green-600" size={24} />
-                <p className="text-green-700 font-bold">{success}</p>
-              </div>
-            </div>
-          )}
+              {/* Success Alert */}
+              {success && (
+                <div className="mb-6 p-5 bg-green-50 border-l-4 border-green-500 rounded-xl shadow-md animate-in fade-in-50">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="text-green-600" size={24} />
+                    <p className="text-green-700 font-bold">{success}</p>
+                  </div>
+                </div>
+              )}
 
-          {/* Form Container */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 lg:p-10 border-2 border-gray-100 relative overflow-hidden">
-            {/* Decorative Elements */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-accent opacity-5"></div>
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-primary opacity-5"></div>
-            
-            <div className="relative z-10">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Company Name */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <Building2 className="text-secondary" size={18} />
-                    Company Name <span className="text-red-600">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={(e) => {
-                        handleChange(e)
-                        setShowCompanyDropdown(true)
-                      }}
-                      onFocus={() => setShowCompanyDropdown(true)}
-                      placeholder="Enter company name (e.g., Google, Microsoft)"
-                      className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
-                    />
-                    {showCompanyDropdown && formData.companyName && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-accent rounded-xl shadow-xl z-10 max-h-60 overflow-y-auto">
-                        {companies
-                          .filter((c) =>
-                            c.toLowerCase().includes(formData.companyName.toLowerCase())
-                          )
-                          .map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => {
-                                setFormData((prev) => ({ ...prev, companyName: c }))
-                                setShowCompanyDropdown(false)
-                              }}
-                              className="w-full text-left px-5 py-3 hover:bg-background transition-all font-medium flex items-center gap-2 border-b border-gray-100 last:border-b-0"
-                            >
-                              <Building2 size={16} className="text-secondary" />
-                              {c}
-                            </button>
-                          ))}
+              {/* Form Container */}
+              <div className="bg-white rounded-2xl shadow-xl p-8 lg:p-10 border-2 border-gray-100 relative overflow-hidden">
+                {/* Decorative Elements */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-accent opacity-5"></div>
+                <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-primary opacity-5"></div>
+
+                <div className="relative z-10">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Company Name */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <Building2 className="text-secondary" size={18} />
+                        Company Name <span className="text-red-600">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="companyName"
+                          value={formData.companyName}
+                          onChange={(e) => {
+                            handleChange(e);
+                            setShowCompanyDropdown(true);
+                          }}
+                          onFocus={() => setShowCompanyDropdown(true)}
+                          onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 200)} // Delay to allow click
+                          placeholder="Enter company name (e.g., Google, Microsoft)"
+                          className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
+                        />
+                        {showCompanyDropdown && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-accent rounded-xl shadow-xl z-10 max-h-60 overflow-y-auto">
+                            {companies
+                              .filter((c) =>
+                                c.toLowerCase().includes(formData.companyName.toLowerCase())
+                              )
+                              .map((c) => (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onMouseDown={() => { // onMouseDown fires before onBlur
+                                    setFormData((prev) => ({ ...prev, companyName: c }))
+                                    setShowCompanyDropdown(false)
+                                  }}
+                                  className="w-full text-left px-5 py-3 hover:bg-background transition-all font-medium flex items-center gap-2 border-b border-gray-100 last:border-b-0"
+                                >
+                                  <Building2 size={16} className="text-secondary" />
+                                  {c}
+                                </button>
+                              ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Role Applied For */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <Briefcase className="text-secondary" size={18} />
-                    Role Applied For <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="roleAppliedFor"
-                    value={formData.roleAppliedFor}
-                    onChange={handleChange}
-                    placeholder="e.g., Software Engineer, SDE Intern, Data Analyst"
-                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
-                  />
-                </div>
+                    {/* Role Applied For */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <Briefcase className="text-secondary" size={18} />
+                        Role Applied For <span className="text-red-600">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="roleAppliedFor"
+                          value={formData.roleAppliedFor}
+                          onChange={(e) => {
+                            handleChange(e);
+                            setShowRoleDropdown(true);
+                          }}
+                          onFocus={() => setShowRoleDropdown(true)}
+                          onBlur={() => setTimeout(() => setShowRoleDropdown(false), 200)}
+                          placeholder="e.g., Software Engineer, SDE Intern, Data Analyst"
+                          className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
+                        />
+                        {showRoleDropdown && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-accent rounded-xl shadow-xl z-10 max-h-60 overflow-y-auto">
+                            {roles
+                              .filter((r) =>
+                                r.toLowerCase().includes(formData.roleAppliedFor.toLowerCase())
+                              )
+                              .map((r) => (
+                                <button
+                                  key={r}
+                                  type="button"
+                                  onMouseDown={() => {
+                                    setFormData((prev) => ({ ...prev, roleAppliedFor: r }))
+                                    setShowRoleDropdown(false)
+                                  }}
+                                  className="w-full text-left px-5 py-3 hover:bg-background transition-all font-medium flex items-center gap-2 border-b border-gray-100 last:border-b-0"
+                                >
+                                  <Briefcase size={16} className="text-secondary" />
+                                  {r}
+                                </button>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                {/* Batch & Package Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Batch */}
-                  <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                      <GraduationCap className="text-secondary" size={18} />
-                      Batch (Graduation Year) <span className="text-red-600">*</span>
-                    </label>
-                    <select
-                      name="batch"
-                      value={formData.batch}
-                      onChange={handleChange}
-                      className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
-                    >
-                      {[2024, 2025, 2026, 2027, 2028].map((year) => (
-                        <option key={year} value={year.toString()}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    {/* Batch & Package Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Batch */}
+                      <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                        <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                          <GraduationCap className="text-secondary" size={18} />
+                          Batch (Graduation Year) <span className="text-red-600">*</span>
+                        </label>
+                        <select
+                          name="batch"
+                          value={formData.batch}
+                          onChange={handleChange}
+                          className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
+                        >
+                          {[2024, 2025, 2026, 2027, 2028].map((year) => (
+                            <option key={year} value={year.toString()}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                  {/* Package */}
-                  <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                      <DollarSign className="text-secondary" size={18} />
-                      Package (LPA)
-                    </label>
-                    <input
-                      type="text"
-                      name="package"
-                      value={formData.package}
-                      onChange={handleChange}
-                      placeholder="e.g., 12.5, 15, 20"
-                      className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
-                    />
-                  </div>
-                </div>
+                      {/* Package */}
+                      <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                        <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                          <DollarSign className="text-secondary" size={18} />
+                          Package (LPA)
+                        </label>
+                        <input
+                          type="text"
+                          name="package"
+                          value={formData.package}
+                          onChange={handleChange}
+                          placeholder="e.g., 12.5, 15, 20"
+                          className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
+                        />
+                      </div>
+                    </div>
 
-                {/* Placement Season */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <TrendingUp className="text-secondary" size={18} />
-                    Placement Season
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex-1 flex items-center justify-center gap-3 cursor-pointer p-4 border-2 border-gray-300 rounded-xl hover:border-secondary transition-all bg-white shadow-sm">
-                      <input
-                        type="radio"
-                        name="placementSeason"
-                        value="on-campus"
-                        checked={formData.placementSeason === 'on-campus'}
-                        onChange={handleChange}
-                        className="w-5 h-5 text-secondary focus:ring-accent"
-                      />
-                      <span className="text-gray-700 font-semibold">On Campus</span>
-                    </label>
-                    <label className="flex-1 flex items-center justify-center gap-3 cursor-pointer p-4 border-2 border-gray-300 rounded-xl hover:border-secondary transition-all bg-white shadow-sm">
-                      <input
-                        type="radio"
-                        name="placementSeason"
-                        value="off-campus"
-                        checked={formData.placementSeason === 'off-campus'}
-                        onChange={handleChange}
-                        className="w-5 h-5 text-secondary focus:ring-accent"
-                      />
-                      <span className="text-gray-700 font-semibold">Off Campus</span>
-                    </label>
-                  </div>
-                </div>
+                    {/* Placement Season */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <TrendingUp className="text-secondary" size={18} />
+                        Placement Season
+                      </label>
+                      <div className="flex gap-4">
+                        <label className="flex-1 flex items-center justify-center gap-3 cursor-pointer p-4 border-2 border-gray-300 rounded-xl hover:border-secondary transition-all bg-white shadow-sm">
+                          <input
+                            type="radio"
+                            name="placementSeason"
+                            value="on-campus"
+                            checked={formData.placementSeason === 'on-campus'}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-secondary focus:ring-accent"
+                          />
+                          <span className="text-gray-700 font-semibold">On Campus</span>
+                        </label>
+                        <label className="flex-1 flex items-center justify-center gap-3 cursor-pointer p-4 border-2 border-gray-300 rounded-xl hover:border-secondary transition-all bg-white shadow-sm">
+                          <input
+                            type="radio"
+                            name="placementSeason"
+                            value="off-campus"
+                            checked={formData.placementSeason === 'off-campus'}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-secondary focus:ring-accent"
+                          />
+                          <span className="text-gray-700 font-semibold">Off Campus</span>
+                        </label>
+                      </div>
+                    </div>
 
-                {/* Interview Date */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <Calendar className="text-secondary" size={18} />
-                    Interview Date
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">Year</label>
-                      <select
-                        name="interviewYear"
-                        value={formData.interviewYear}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
-                      >
-                        {[2023, 2024, 2025, 2026].map((year) => (
-                          <option key={year} value={year.toString()}>
-                            {year}
-                          </option>
+                    {/* Interview Date */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <Calendar className="text-secondary" size={18} />
+                        Interview Date
+                      </label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 mb-2">Year</label>
+                          <select
+                            name="interviewYear"
+                            value={formData.interviewYear}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
+                          >
+                            {[2023, 2024, 2025, 2026].map((year) => (
+                              <option key={year} value={year.toString()}>
+                                {year}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 mb-2">Month</label>
+                          <select
+                            name="interviewMonth"
+                            value={formData.interviewMonth}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
+                          >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                              <option key={month} value={month.toString().padStart(2, '0')}>
+                                {new Date(2024, month - 1).toLocaleString('default', { month: 'long' })}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Difficulty Rating */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <TrendingUp className="text-secondary" size={18} />
+                        Difficulty Rating
+                      </label>
+                      <div className="flex gap-3">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, difficultyRating: rating.toString() }))}
+                            className={`flex-1 h-14 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg ${formData.difficultyRating === rating.toString()
+                              ? 'bg-gradient-to-br from-primary to-secondary text-white ring-4 ring-accent ring-opacity-30'
+                              : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-secondary'
+                              }`}
+                          >
+                            {rating}
+                          </button>
                         ))}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-3 text-center">1 = Very Easy • 5 = Very Hard</p>
+                    </div>
+
+                    {/* Preparation Time */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <Clock className="text-secondary" size={18} />
+                        Preparation Time (in weeks)
+                      </label>
+                      <input
+                        type="number"
+                        name="preparationTime"
+                        value={formData.preparationTime}
+                        onChange={handleChange}
+                        placeholder="e.g., 8, 12, 16"
+                        className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
+                      />
+                    </div>
+
+                    {/* Overall Experience Rating */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <Star className="text-secondary" size={18} />
+                        Overall Experience Rating
+                      </label>
+                      <div className="flex gap-3">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, overallExperienceRating: rating.toString() }))}
+                            className={`flex-1 h-14 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg ${formData.overallExperienceRating === rating.toString()
+                              ? 'bg-gradient-to-br from-secondary to-accent text-white ring-4 ring-accent ring-opacity-30'
+                              : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-accent'
+                              }`}
+                          >
+                            <Star className="inline-block" size={20} fill={formData.overallExperienceRating === rating.toString() ? 'white' : 'none'} />
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-3 text-center">1 = Poor Experience • 5 = Excellent Experience</p>
+                    </div>
+
+                    {/* Outcome */}
+                    <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
+                      <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+                        <CheckCircle className="text-secondary" size={18} />
+                        Outcome <span className="text-red-600">*</span>
+                      </label>
+                      <select
+                        name="outcome"
+                        value={formData.outcome}
+                        onChange={handleChange}
+                        className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
+                      >
+                        <option value="in-process">⏳ In Process</option>
+                        <option value="selected">✓ Selected / Placed</option>
+                        <option value="not-selected">✗ Not Selected / Rejected</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">Month</label>
-                      <select
-                        name="interviewMonth"
-                        value={formData.interviewMonth}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                          <option key={month} value={month.toString().padStart(2, '0')}>
-                            {new Date(2024, month - 1).toLocaleString('default', { month: 'long' })}
-                          </option>
-                        ))}
-                      </select>
+
+                    {/* Auto-save Toggle */}
+                    <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-l-4 border-secondary">
+                      <input
+                        type="checkbox"
+                        checked={autoSave}
+                        onChange={(e) => setAutoSave(e.target.checked)}
+                        className="w-5 h-5 rounded text-secondary focus:ring-accent"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Save className="text-secondary" size={20} />
+                        <span className="text-primary font-bold">Auto-save enabled</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Difficulty Rating */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <TrendingUp className="text-secondary" size={18} />
-                    Difficulty Rating
-                  </label>
-                  <div className="flex gap-3">
-                    {[1, 2, 3, 4, 5].map((rating) => (
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 pt-6">
+                      {/* Manual Save Button */}
                       <button
-                        key={rating}
                         type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, difficultyRating: rating.toString() }))}
-                        className={`flex-1 h-14 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg ${
-                          formData.difficultyRating === rating.toString()
-                            ? 'bg-gradient-to-br from-primary to-secondary text-white ring-4 ring-accent ring-opacity-30'
-                            : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-secondary'
-                        }`}
+                        onClick={() => saveMetadata(false)}
+                        className="flex items-center gap-2 px-8 py-4 rounded-xl bg-white border-2 border-accent text-accent font-bold hover:bg-accent hover:text-white transition-all shadow-md hover:shadow-lg"
                       >
-                        {rating}
+                        <Save size={20} />
+                        Save Progress
                       </button>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-3 text-center">1 = Very Easy • 5 = Very Hard</p>
-                </div>
-
-                {/* Preparation Time */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <Clock className="text-secondary" size={18} />
-                    Preparation Time (in weeks)
-                  </label>
-                  <input
-                    type="number"
-                    name="preparationTime"
-                    value={formData.preparationTime}
-                    onChange={handleChange}
-                    placeholder="e.g., 8, 12, 16"
-                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
-                  />
-                </div>
-
-                {/* Overall Experience Rating */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <Star className="text-secondary" size={18} />
-                    Overall Experience Rating
-                  </label>
-                  <div className="flex gap-3">
-                    {[1, 2, 3, 4, 5].map((rating) => (
                       <button
-                        key={rating}
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, overallExperienceRating: rating.toString() }))}
-                        className={`flex-1 h-14 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg ${
-                          formData.overallExperienceRating === rating.toString()
-                            ? 'bg-gradient-to-br from-secondary to-accent text-white ring-4 ring-accent ring-opacity-30'
-                            : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-accent'
-                        }`}
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105"
                       >
-                        <Star className="inline-block" size={20} fill={formData.overallExperienceRating === rating.toString() ? 'white' : 'none'} />
+                        {loading ? 'Processing...' : (
+                          <>
+                            Next: Add Rounds <ChevronRight size={24} />
+                          </>
+                        )}
                       </button>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-3 text-center">1 = Poor Experience • 5 = Excellent Experience</p>
+                    </div>
+                  </form>
                 </div>
-
-                {/* Outcome */}
-                <div className="bg-gradient-to-br from-background to-white rounded-xl p-5 border border-gray-200 hover:border-accent transition-all">
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-                    <CheckCircle className="text-secondary" size={18} />
-                    Outcome <span className="text-red-600">*</span>
-                  </label>
-                  <select
-                    name="outcome"
-                    value={formData.outcome}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
-                  >
-                    <option value="in-process">⏳ In Process</option>
-                    <option value="selected">✓ Selected / Placed</option>
-                    <option value="not-selected">✗ Not Selected / Rejected</option>
-                  </select>
-                </div>
-
-                {/* Auto-save Toggle */}
-                <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-l-4 border-secondary">
-                  <input
-                    type="checkbox"
-                    checked={autoSave}
-                    onChange={(e) => setAutoSave(e.target.checked)}
-                    className="w-5 h-5 rounded text-secondary focus:ring-accent"
-                  />
-                  <div className="flex items-center gap-2">
-                    <Save className="text-secondary" size={20} />
-                    <span className="text-primary font-bold">Auto-save draft enabled</span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-4 pt-6">
-                  <button
-                    type="button"
-                    onClick={saveDraft}
-                    className="flex items-center gap-2 px-8 py-4 rounded-xl bg-white border-2 border-accent text-accent font-bold hover:bg-accent hover:text-white transition-all shadow-md hover:shadow-lg"
-                  >
-                    <Save size={20} />
-                    Save Draft
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105"
-                  >
-                    {loading ? 'Processing...' : (
-                      <>
-                        Next: Add Rounds <ChevronRight size={24} />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+              </div>
             </div>
           </div>
         </div>

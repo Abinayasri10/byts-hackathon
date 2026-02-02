@@ -48,6 +48,7 @@ function Navbar() {
     { label: 'Mentorship', path: '/mentorship' },
     { label: 'About', path: '/about' },
     { label: 'Contact', path: '/contact' },
+  
   ]
 
   const isActive = (path) => location.pathname === path
@@ -107,16 +108,7 @@ function Navbar() {
 
           {/* Right Section */}
           <div className="flex items-center gap-4">
-            {/* Display Work Status if exists */}
-            {workStatus && (
-              <div className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-lg bg-background text-primary font-semibold shadow-md">
-                <Briefcase size={18} />
-                <div className="text-left">
-                  <div className="text-xs text-gray-600">Working at</div>
-                  <div className="text-sm font-bold">{workStatus.company}</div>
-                </div>
-              </div>
-            )}
+           
 
             {/* Share Experience Button */}
             <Link

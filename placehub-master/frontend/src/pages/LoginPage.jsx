@@ -90,17 +90,11 @@ function LoginPage() {
           </div>
 
           {/* Footer Links */}
-          <div className="mt-8 space-y-4 pt-6 border-t border-gray-100">
+          <div className="mt-8 pt-6 border-t border-gray-100">
             <div className="text-center text-sm">
               <span className="text-gray-500">Don't have an account?</span>{' '}
               <Link to="/signup" className="font-bold text-secondary hover:text-primary transition-colors duration-200">
                 Sign up for free
-              </Link>
-            </div>
-            
-            <div className="text-center">
-              <Link to="#" className="text-xs font-semibold uppercase tracking-wider text-accent/80 hover:text-secondary transition-all">
-                Forgot password?
               </Link>
             </div>
           </div>

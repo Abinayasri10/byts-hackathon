@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react'
+import TermsModal from './TermsModal'
 
 const PASSWORD_STRENGTH_LEVELS = {
   weak: { color: 'bg-red-500', label: 'Weak', score: 1 },
@@ -32,6 +33,7 @@ function SignupForm({ onSubmit, isLoading }) {
   })
   const [passwordStrength, setPasswordStrength] = useState('weak')
   const [errors, setErrors] = useState({})
+  const [showTermsModal, setShowTermsModal] = useState(false)
 
   useEffect(() => {
     setPasswordStrength(calculatePasswordStrength(formData.password))
@@ -194,23 +196,37 @@ function SignupForm({ onSubmit, isLoading }) {
         )}
       </div>
 
-      <div className="flex items-start">
-        <input
-          type="checkbox"
-          id="acceptTerms"
-          name="acceptTerms"
-          checked={formData.acceptTerms}
-          onChange={handleChange}
-          className="w-4 h-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-        />
-        <label htmlFor="acceptTerms" className="ml-2 text-xs text-gray-600 cursor-pointer">
-          I agree to the{' '}
-          <a href="#" className="text-primary hover:underline font-semibold">
-            Terms & Conditions
-          </a>
-        </label>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <p className="text-sm text-gray-700 mb-2">
+          By signing up, you must read and accept our Terms & Conditions
+        </p>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            setShowTermsModal(true);
+          }}
+          className="w-full py-2 px-4 bg-white border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2"
+        >
+          {formData.acceptTerms ? (
+            <>
+              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Terms Accepted - Click to Review
+            </>
+          ) : (
+            <>
+              📜 Read Terms & Conditions
+            </>
+          )}
+        </button>
       </div>
-      {errors.acceptTerms && <p className="text-red-600 text-xs">{errors.acceptTerms}</p>}
+      {errors.acceptTerms && <p className="text-red-600 text-xs mt-1">{errors.acceptTerms}</p>}
 
       <button
         type="submit"
@@ -226,6 +242,18 @@ function SignupForm({ onSubmit, isLoading }) {
           'Create Account'
         )}
       </button>
+
+      <TermsModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)}
+        accepted={formData.acceptTerms}
+        onAcceptChange={(checked) => {
+          setFormData(prev => ({ ...prev, acceptTerms: checked }));
+          if (checked && errors.acceptTerms) {
+            setErrors(prev => ({ ...prev, acceptTerms: '' }));
+          }
+        }}
+      />
     </form>
   )
 }

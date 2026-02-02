@@ -6,6 +6,7 @@ import MainLayout from '../components/MainLayout'
 import { TrendingUp, BookOpen, Users, Briefcase, ArrowRight, Star } from 'lucide-react'
 import ChatWidgetButton from '../components/chat/ChatWidgetButton'
 import ChatContainer from '../components/chat/ChatContainer'
+
 function DashboardPage() {
   const [experiences, setExperiences] = useState([])
   const [loading, setLoading] = useState(true)

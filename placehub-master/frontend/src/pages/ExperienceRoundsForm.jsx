@@ -1,20 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import MainLayout from '../components/MainLayout'
 import { ChevronRight, Plus, Trash2, AlertCircle, Save, ArrowLeft } from 'lucide-react'
 import { experienceAPI } from '../services/api'
 
 function ExperienceRoundsForm() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [rounds, setRounds] = useState([])
   const [showAddRoundModal, setShowAddRoundModal] = useState(false)
   const [activeRoundTab, setActiveRoundTab] = useState(0)
-  const [draft, setDraft] = useState(null)
+
+  // Get experience ID passed from previous step
+  const experienceId = location.state?.experienceId
 
   const roundTypes = [
     { value: 'online-assessment', label: 'Online Assessment' },
@@ -25,55 +28,50 @@ function ExperienceRoundsForm() {
     { value: 'other', label: 'Other' },
   ]
 
-  // Load draft on mount
+  // Redirect if no ID
   useEffect(() => {
-    loadDraft()
-  }, [])
+    if (!experienceId) {
+      setError('Missing experience details. Redirecting to start...')
+      setTimeout(() => navigate('/share-experience/metadata'), 2000)
+    } else {
+      // Optionally load existing rounds if editing
+      loadRounds()
+    }
+  }, [experienceId])
 
-  // Inside ExperienceRoundsForm.jsx
-
-  const loadDraft = async () => {
+  const loadRounds = async () => {
     try {
-      setLoading(true); // Good practice to show loading state
-      const response = await experienceAPI.getDraft()
-      
-      if (response.data.success && response.data.draft) {
-        console.log("Draft loaded:", response.data.draft); // Debugging
-        setDraft(response.data.draft)
-        setRounds(response.data.draft.rounds || [])
-      } else {
-        // If no draft exists, we cannot add rounds. Redirect to Phase 1.
-        setError("No active draft found. Redirecting to start...");
-        setTimeout(() => navigate('/share-experience/metadata'), 2000);
+      const res = await experienceAPI.getById(experienceId)
+      if (res.data.success && res.data.experience.rounds) {
+        setRounds(res.data.experience.rounds)
       }
     } catch (err) {
-      console.error('Failed to load draft:', err)
-      setError('Failed to load experience details.')
-    } finally {
-      setLoading(false);
+      console.error("Failed to load rounds", err)
     }
   }
 
-  // Inside ExperienceRoundsForm.jsx
-
-  const saveDraft = async () => {
-    // 1. Safety Check: Don't save if we don't have the parent draft
-    if (!draft) {
-      setError('Cannot save: Missing company details. Please go back to the previous step.');
-      return;
+  // Auto-save logic
+  useEffect(() => {
+    if (rounds.length > 0 && experienceId) {
+      const timer = setTimeout(() => {
+        saveRounds(true)
+      }, 3000)
+      return () => clearTimeout(timer)
     }
+  }, [rounds, experienceId])
+
+  const saveRounds = async (silent = false) => {
+    if (!experienceId) return
 
     try {
-      await experienceAPI.saveDraft({
-        ...draft, // Now we ensure this is not null
-        rounds,
-      })
-      setSuccess('Rounds saved!')
-      setTimeout(() => setSuccess(''), 2000)
+      await experienceAPI.saveRounds(experienceId, rounds)
+      if (!silent) {
+        setSuccess('Rounds saved!')
+        setTimeout(() => setSuccess(''), 2000)
+      }
     } catch (err) {
       console.error("Save Error:", err);
-      // 2. Display the actual error message from backend
-      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to save rounds')
+      if (!silent) setError(err.response?.data?.message || 'Failed to save rounds')
     }
   }
 
@@ -113,10 +111,10 @@ function ExperienceRoundsForm() {
 
     setLoading(true)
     try {
-      await saveDraft()
+      await saveRounds(false)
       setSuccess('Rounds saved! Proceeding to materials...')
       setTimeout(() => {
-        navigate('/share-experience/materials')
+        navigate('/share-experience/materials', { state: { experienceId } })
       }, 1500)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save rounds')
@@ -199,15 +197,13 @@ function ExperienceRoundsForm() {
                     key={round.id}
                     type="button"
                     onClick={() => setActiveRoundTab(index)}
-                    className={`px-4 py-4 font-semibold whitespace-nowrap transition ${
-                      activeRoundTab === index
+                    className={`px-4 py-4 font-semibold whitespace-nowrap transition ${activeRoundTab === index
                         ? 'border-b-2 border-[#472183] text-[#472183] bg-blue-50'
                         : 'border-b-2 border-transparent text-gray-600 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <span>Round {index + 1}</span>
-                      {round.saved && <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">Saved</span>}
                     </div>
                   </button>
                 ))}
@@ -238,7 +234,7 @@ function ExperienceRoundsForm() {
             <div className="flex gap-4 pt-6">
               <button
                 type="button"
-                onClick={() => navigate('/share-experience/metadata')}
+                onClick={() => navigate('/share-experience/metadata', { state: { experienceId } })}
                 className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition"
               >
                 <ArrowLeft size={20} />
@@ -246,7 +242,7 @@ function ExperienceRoundsForm() {
               </button>
               <button
                 type="button"
-                onClick={saveDraft}
+                onClick={() => saveRounds(false)}
                 className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition"
               >
                 <Save size={20} />
@@ -346,7 +342,8 @@ function RoundForm({ round, onUpdate, onDelete, roundTypes }) {
   )
 }
 
-// Round Type Components
+// Round Type Components - Keeping these as is since they are just UI components
+// NOTE: Copied from original file to ensure completeness
 function OnlineAssessmentFields({ round, onUpdate }) {
   return (
     <div className="space-y-6">
@@ -372,7 +369,6 @@ function OnlineAssessmentFields({ round, onUpdate }) {
           />
         </div>
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Question Breakdown</label>
         <textarea
@@ -383,7 +379,6 @@ function OnlineAssessmentFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Difficulty Level</label>
         <select
@@ -426,7 +421,6 @@ function TechnicalInterviewFields({ round, onUpdate }) {
           />
         </div>
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Topics Covered</label>
         <textarea
@@ -437,7 +431,6 @@ function TechnicalInterviewFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Interview Questions</label>
         <textarea
@@ -465,7 +458,6 @@ function HRInterviewFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">HR Questions Asked</label>
         <textarea
@@ -476,7 +468,6 @@ function HRInterviewFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Answers that Worked</label>
         <textarea
@@ -487,7 +478,6 @@ function HRInterviewFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Red Flags to Avoid</label>
         <textarea
@@ -527,7 +517,6 @@ function GDFields({ round, onUpdate }) {
           />
         </div>
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Evaluation Criteria</label>
         <textarea
@@ -538,7 +527,6 @@ function GDFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Your Reflection</label>
         <textarea
@@ -566,7 +554,6 @@ function CaseStudyFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Problem Statement</label>
         <textarea
@@ -577,7 +564,6 @@ function CaseStudyFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Your Approach</label>
         <textarea
@@ -605,7 +591,6 @@ function OtherRoundFields({ round, onUpdate }) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
         />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">Key Takeaways</label>
         <textarea

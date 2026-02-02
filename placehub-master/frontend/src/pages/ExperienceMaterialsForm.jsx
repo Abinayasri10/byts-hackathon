@@ -1,48 +1,67 @@
 'use client';
 
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import MainLayout from '../components/MainLayout'
 import { ChevronRight, Plus, Trash2, AlertCircle, Save, ArrowLeft, Upload, CheckCircle } from 'lucide-react'
 import { experienceAPI } from '../services/api'
 
 function ExperienceMaterialsForm() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [draft, setDraft] = useState(null)
   const [materials, setMaterials] = useState([])
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [experienceId, setExperienceId] = useState(location.state?.experienceId)
+  const [summaryData, setSummaryData] = useState(null)
 
-  // Load draft on mount
+  // Redirect if no ID
   useEffect(() => {
-    loadDraft()
-  }, [])
+    if (!experienceId) {
+      setError('Missing experience details. Redirecting to start...')
+      setTimeout(() => navigate('/share-experience/metadata'), 2000)
+    } else {
+      fetchExistingData()
+    }
+  }, [experienceId])
 
-  const loadDraft = async () => {
+  const fetchExistingData = async () => {
     try {
-      const response = await experienceAPI.getDraft()
-      if (response.data.success && response.data.draft) {
-        setDraft(response.data.draft)
-        setMaterials(response.data.draft.materials || [])
+      const res = await experienceAPI.getById(experienceId)
+      if (res.data.success) {
+        setSummaryData(res.data.experience)
+        if (res.data.experience.materials) {
+          setMaterials(res.data.experience.materials)
+        }
       }
     } catch (err) {
-      console.error('Failed to load draft:', err)
+      console.error("Failed to load experience data", err)
     }
   }
 
-  const saveDraft = async () => {
+  // Auto-save logic
+  useEffect(() => {
+    if (materials.length > 0 && experienceId) {
+      const timer = setTimeout(() => {
+        saveMaterials(true)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [materials, experienceId])
+
+  const saveMaterials = async (silent = false) => {
+    if (!experienceId) return
     try {
-      await experienceAPI.saveDraft({
-        ...draft,
-        materials,
-      })
-      setSuccess('Materials saved!')
-      setTimeout(() => setSuccess(''), 2000)
+      await experienceAPI.saveMaterials(experienceId, materials)
+      if (!silent) {
+        setSuccess('Materials saved!')
+        setTimeout(() => setSuccess(''), 2000)
+      }
     } catch (err) {
-      setError('Failed to save materials')
+      if (!silent) setError('Failed to save materials')
     }
   }
 
@@ -70,17 +89,17 @@ function ExperienceMaterialsForm() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     setError('')
     setSuccess('')
     setSubmitting(true)
 
     try {
-      // Save final experience with all data
-      const response = await experienceAPI.create({
-        ...draft,
-        materials,
-      })
+      // Final save of materials
+      await saveMaterials(true)
+
+      // Submit for approval (Change status to pending)
+      const response = await experienceAPI.submit(experienceId)
 
       if (response.data.success) {
         setSuccess('Experience shared successfully!')
@@ -97,272 +116,222 @@ function ExperienceMaterialsForm() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-background py-12">
-        <div className="max-w-5xl mx-auto px-4">
-          {/* Progress Bar */}
-          <div className="mb-12 bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-md">
-                  1
-                </div>
-                <span className="font-bold text-gray-800">Metadata</span>
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        {/* Progress Bar */}
+        <div className="mb-12">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#472183] text-white flex items-center justify-center font-bold">
+                1
               </div>
-              <div className="h-1 flex-1 bg-primary rounded-full"></div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-md">
-                  2
-                </div>
-                <span className="font-bold text-gray-800">Rounds</span>
-              </div>
-              <div className="h-1 flex-1 bg-primary rounded-full"></div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-secondary to-accent text-white flex items-center justify-center font-bold shadow-lg ring-4 ring-accent ring-opacity-20">
-                  3
-                </div>
-                <span className="font-bold text-primary">Materials</span>
-              </div>
+              <span className="font-semibold text-gray-800">Metadata</span>
             </div>
-            <div className="w-full h-2 bg-primary rounded-full shadow-inner"></div>
+            <div className="h-1 flex-1 bg-[#472183]"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#472183] text-white flex items-center justify-center font-bold">
+                2
+              </div>
+              <span className="font-semibold text-gray-800">Rounds</span>
+            </div>
+            <div className="h-1 flex-1 bg-[#472183]"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#472183] text-white flex items-center justify-center font-bold">
+                3
+              </div>
+              <span className="font-semibold text-gray-800">Materials</span>
+            </div>
           </div>
+          <div className="w-full h-1 bg-[#472183] rounded-full"></div>
+        </div>
 
-          {/* Header */}
-          <div className="mb-10 text-center">
-            <h1 className="text-5xl font-bold text-primary mb-4">
-              Phase 3: Materials & Resources
-            </h1>
-            <p className="text-gray-600 text-xl max-w-3xl mx-auto">
-              Add helpful resources, documents, and links that will assist future candidates in their preparation journey.
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-[#472183] mb-3">Phase 3: Materials & Resources</h1>
+          <p className="text-gray-600 text-lg">
+            Add helpful resources, documents, and links that will assist future candidates.
+          </p>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex gap-3">
+            <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
+            <p className="text-green-700 font-semibold">{success}</p>
+          </div>
+        )}
+
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
+          {/* Info Box */}
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
+            <p className="text-blue-700 font-semibold mb-2">Optional Step</p>
+            <p className="text-blue-600">
+              Adding materials and resources is optional but highly valuable. You can add useful links, documents, code snippets, or notes that helped you prepare.
             </p>
           </div>
 
-          {/* Error Alert */}
-          {error && (
-            <div className="mb-6 p-5 bg-red-50 border-l-4 border-red-500 rounded-xl flex gap-3 shadow-md animate-in fade-in-50">
-              <AlertCircle className="text-red-600 flex-shrink-0" size={24} />
-              <p className="text-red-700 font-medium">{error}</p>
-            </div>
-          )}
-
-          {/* Success Alert */}
-          {success && (
-            <div className="mb-6 p-5 bg-green-50 border-l-4 border-green-500 rounded-xl shadow-md animate-in fade-in-50">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="text-green-600" size={24} />
-                <p className="text-green-700 font-bold">{success}</p>
+          {/* Materials List */}
+          <div className="space-y-6">
+            {materials.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                <p className="text-gray-600 mb-6">No materials added yet</p>
+                <button
+                  type="button"
+                  onClick={addMaterial}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#82C3EC] text-white font-semibold hover:bg-[#6fb5de] transition"
+                >
+                  <Plus size={20} />
+                  Add Material
+                </button>
               </div>
-            </div>
-          )}
+            ) : (
+              <>
+                {materials.map((material, index) => (
+                  <MaterialInput
+                    key={material.id}
+                    material={material}
+                    index={index}
+                    onUpdate={(updates) => updateMaterial(material.id, updates)}
+                    onDelete={() => deleteMaterial(material.id)}
+                  />
+                ))}
+                <button
+                  type="button"
+                  onClick={addMaterial}
+                  className="flex items-center gap-2 px-6 py-3 rounded-lg bg-[#82C3EC] text-white font-semibold hover:bg-[#6fb5de] transition"
+                >
+                  <Plus size={20} />
+                  Add Another Material
+                </button>
+              </>
+            )}
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Info Box */}
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-secondary p-6 rounded-xl shadow-md">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-secondary bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="text-secondary" size={20} />
+          {/* Summary Section */}
+          {summaryData && (
+            <div className="bg-[#F1F6F5] rounded-xl p-8">
+              <h3 className="text-xl font-bold text-[#472183] mb-6">Experience Summary</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg p-4">
+                  <p className="text-xs text-gray-600 font-semibold uppercase mb-1">Company</p>
+                  <p className="font-bold text-gray-800">{summaryData.companyName || 'N/A'}</p>
                 </div>
-                <div>
-                  <p className="text-primary font-bold mb-2 text-lg">Optional Step</p>
-                  <p className="text-gray-700 leading-relaxed">
-                    Adding materials and resources is optional but highly valuable. You can add useful links, documents, code snippets, or notes that helped you prepare.
+                <div className="bg-white rounded-lg p-4">
+                  <p className="text-xs text-gray-600 font-semibold uppercase mb-1">Role</p>
+                  <p className="font-bold text-gray-800">{summaryData.roleAppliedFor || 'N/A'}</p>
+                </div>
+                <div className="bg-white rounded-lg p-4">
+                  <p className="text-xs text-gray-600 font-semibold uppercase mb-1">Batch</p>
+                  <p className="font-bold text-gray-800">{summaryData.batch || 'N/A'}</p>
+                </div>
+                <div className="bg-white rounded-lg p-4">
+                  <p className="text-xs text-gray-600 font-semibold uppercase mb-1">Outcome</p>
+                  <p className={`font-bold ${summaryData.outcome === 'selected'
+                      ? 'text-green-600'
+                      : summaryData.outcome === 'not-selected'
+                        ? 'text-red-600'
+                        : 'text-yellow-600'
+                    }`}>
+                    {summaryData.outcome === 'selected' ? '✓ Selected' : summaryData.outcome === 'not-selected' ? '✗ Not Selected' : 'In Process'}
                   </p>
                 </div>
               </div>
             </div>
-
-            {/* Materials Container */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-primary">Study Materials & Resources</h2>
-                {materials.length > 0 && (
-                  <span className="px-4 py-2 rounded-full bg-accent bg-opacity-10 text-accent font-bold text-sm">
-                    {materials.length} {materials.length === 1 ? 'Material' : 'Materials'}
-                  </span>
-                )}
-              </div>
-
-              {/* Materials List */}
-              <div className="space-y-6">
-                {materials.length === 0 ? (
-                  <div className="text-center py-16 bg-gradient-to-br from-background to-white rounded-xl border-2 border-dashed border-gray-300">
-                    <div className="w-20 h-20 rounded-full bg-accent bg-opacity-10 flex items-center justify-center mx-auto mb-6">
-                      <Upload className="text-accent" size={40} />
-                    </div>
-                    <p className="text-gray-600 mb-6 text-lg font-medium">No materials added yet</p>
-                    <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                      Share resources that helped you succeed - PDFs, links, code snippets, or helpful tips
-                    </p>
-                    <button
-                      type="button"
-                      onClick={addMaterial}
-                      className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-secondary text-white font-bold text-lg hover:bg-accent transition-all shadow-lg hover:shadow-xl hover:scale-105"
-                    >
-                      <Plus size={24} />
-                      Add Your First Material
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {materials.map((material, index) => (
-                      <MaterialInput
-                        key={material.id}
-                        material={material}
-                        index={index}
-                        onUpdate={(updates) => updateMaterial(material.id, updates)}
-                        onDelete={() => deleteMaterial(material.id)}
-                      />
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addMaterial}
-                      className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-background to-white border-2 border-dashed border-accent text-secondary font-bold hover:border-secondary hover:bg-accent hover:bg-opacity-5 transition-all"
-                    >
-                      <Plus size={20} />
-                      Add Another Material
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Summary Section */}
-            {draft && (
-              <div className="bg-gradient-to-br from-primary to-secondary rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white opacity-5 -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white opacity-5 translate-y-1/2 -translate-x-1/2"></div>
-                
-                <div className="relative z-10">
-                  <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                    <CheckCircle size={28} />
-                    Experience Summary
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
-                      <p className="text-xs text-white text-opacity-80 font-bold uppercase mb-2 tracking-wide">Company</p>
-                      <p className="font-bold text-lg">{draft.companyName || 'N/A'}</p>
-                    </div>
-                    <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
-                      <p className="text-xs text-white text-opacity-80 font-bold uppercase mb-2 tracking-wide">Role</p>
-                      <p className="font-bold text-lg">{draft.roleAppliedFor || 'N/A'}</p>
-                    </div>
-                    <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
-                      <p className="text-xs text-white text-opacity-80 font-bold uppercase mb-2 tracking-wide">Batch</p>
-                      <p className="font-bold text-lg">{draft.batch || 'N/A'}</p>
-                    </div>
-                    <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
-                      <p className="text-xs text-white text-opacity-80 font-bold uppercase mb-2 tracking-wide">Outcome</p>
-                      <p className={`font-bold text-lg flex items-center gap-2 ${
-                        draft.outcome === 'selected'
-                          ? 'text-green-300'
-                          : draft.outcome === 'not-selected'
-                          ? 'text-red-300'
-                          : 'text-yellow-300'
-                      }`}>
-                        {draft.outcome === 'selected' ? '✓ Selected' : draft.outcome === 'not-selected' ? '✗ Not Selected' : 'In Process'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 pt-6">
-              <button
-                type="button"
-                onClick={() => navigate('/share-experience/rounds')}
-                className="flex items-center gap-2 px-8 py-4 rounded-xl bg-white border-2 border-gray-300 text-gray-700 font-bold hover:border-primary hover:bg-gray-50 transition-all shadow-md hover:shadow-lg"
-              >
-                <ArrowLeft size={20} />
-                Previous Step
-              </button>
-              <button
-                type="button"
-                onClick={saveDraft}
-                className="flex items-center gap-2 px-8 py-4 rounded-xl bg-white border-2 border-accent text-accent font-bold hover:bg-accent hover:text-white transition-all shadow-md hover:shadow-lg"
-              >
-                <Save size={20} />
-                Save Draft
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowReviewModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:shadow-2xl transition-all shadow-lg hover:scale-105"
-              >
-                <CheckCircle size={24} />
-                Review & Submit Experience
-              </button>
-            </div>
-          </form>
-
-          {/* Review Modal */}
-          {showReviewModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in-50">
-              <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-accent">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center">
-                    <CheckCircle className="text-white" size={24} />
-                  </div>
-                  <h2 className="text-3xl font-bold text-primary">Review Your Experience</h2>
-                </div>
-
-                {draft && (
-                  <div className="space-y-6 mb-8">
-                    <div className="bg-background rounded-xl p-6 border border-gray-200">
-                      <p className="text-sm text-gray-600 font-bold uppercase mb-2 tracking-wide">Company</p>
-                      <p className="text-2xl font-bold text-primary">{draft.companyName}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-background rounded-xl p-6 border border-gray-200">
-                        <p className="text-sm text-gray-600 font-bold uppercase mb-2 tracking-wide">Role</p>
-                        <p className="text-lg font-bold text-gray-800">{draft.roleAppliedFor}</p>
-                      </div>
-                      <div className="bg-background rounded-xl p-6 border border-gray-200">
-                        <p className="text-sm text-gray-600 font-bold uppercase mb-2 tracking-wide">Batch</p>
-                        <p className="text-lg font-bold text-gray-800">{draft.batch}</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-accent bg-opacity-10 rounded-xl p-6 border-2 border-accent border-opacity-30">
-                      <p className="text-sm text-secondary font-bold uppercase mb-2 tracking-wide">Materials Added</p>
-                      <p className="text-xl font-bold text-gray-800">{materials.length} {materials.length === 1 ? 'material' : 'materials'}</p>
-                    </div>
-
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded-xl">
-                      <div className="flex gap-3">
-                        <AlertCircle className="text-yellow-600 flex-shrink-0" size={20} />
-                        <p className="text-sm text-yellow-800 font-medium leading-relaxed">
-                          Once submitted, your experience will be reviewed by our team and published after approval.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setShowReviewModal(false)}
-                    className="flex-1 px-6 py-4 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-all border-2 border-gray-300"
-                  >
-                    Edit More
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowReviewModal(false)
-                      handleSubmit({ preventDefault: () => {} })
-                    }}
-                    disabled={submitting}
-                    className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    {submitting ? 'Submitting...' : 'Confirm & Submit'}
-                  </button>
-                </div>
-              </div>
-            </div>
           )}
-        </div>
+
+          {/* Buttons */}
+          <div className="flex gap-4 pt-6">
+            <button
+              type="button"
+              onClick={() => navigate('/share-experience/rounds', { state: { experienceId } })}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition"
+            >
+              <ArrowLeft size={20} />
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => saveMaterials(false)}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition"
+            >
+              <Save size={20} />
+              Save Materials
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowReviewModal(true)}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[#472183] text-white font-bold hover:bg-[#4B56D2] transition"
+            >
+              <CheckCircle size={20} />
+              Review & Submit
+            </button>
+          </div>
+        </form>
+
+        {/* Review Modal */}
+        {showReviewModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full max-h-96 overflow-y-auto">
+              <h2 className="text-2xl font-bold text-[#472183] mb-6">Review Your Experience</h2>
+
+              {summaryData && (
+                <div className="space-y-6 mb-8">
+                  <div>
+                    <p className="text-sm text-gray-600 font-semibold mb-1">COMPANY</p>
+                    <p className="text-lg font-bold text-gray-800">{summaryData.companyName}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold mb-1">ROLE</p>
+                      <p className="text-lg font-bold text-gray-800">{summaryData.roleAppliedFor}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold mb-1">BATCH</p>
+                      <p className="text-lg font-bold text-gray-800">{summaryData.batch}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600 font-semibold mb-2">MATERIALS ADDED</p>
+                    <p className="text-gray-700">{materials.length} materials</p>
+                  </div>
+
+                  <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <p className="text-sm text-yellow-700">
+                      Once submitted, your experience will be reviewed by our team and published after approval.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  className="flex-1 px-4 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition"
+                >
+                  Edit More
+                </button>
+                <button
+                  onClick={() => {
+                    setShowReviewModal(false)
+                    handleSubmit({ preventDefault: () => { } })
+                  }}
+                  disabled={submitting}
+                  className="flex-1 px-4 py-3 rounded-lg bg-[#472183] text-white font-bold hover:bg-[#4B56D2] disabled:opacity-50 transition"
+                >
+                  {submitting ? 'Submitting...' : 'Confirm & Submit'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   )
@@ -370,94 +339,76 @@ function ExperienceMaterialsForm() {
 
 function MaterialInput({ material, index, onUpdate, onDelete }) {
   return (
-    <div className="bg-gradient-to-br from-white to-background rounded-2xl shadow-lg p-8 space-y-6 border-2 border-gray-100 hover:border-accent transition-all relative overflow-hidden group">
-      {/* Decorative Circle */}
-      <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-accent opacity-5 group-hover:opacity-10 transition-opacity"></div>
-      
-      <div className="relative z-10">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-secondary to-accent text-white flex items-center justify-center font-bold shadow-md">
-              {index + 1}
+    <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
+      <div className="flex justify-between items-start mb-4">
+        <h4 className="text-lg font-bold text-[#472183]">Material {index + 1}</h4>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition"
+        >
+          <Trash2 size={20} />
+        </button>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-3">Material Type</label>
+        <select
+          value={material.type}
+          onChange={(e) => onUpdate({ type: e.target.value })}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
+        >
+          <option value="link">Link/Reference</option>
+          <option value="document">Document/PDF</option>
+          <option value="code">Code Snippet</option>
+          <option value="note">Note/Tip</option>
+          <option value="resource">Resource</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-3">Title</label>
+        <input
+          type="text"
+          value={material.title}
+          onChange={(e) => onUpdate({ title: e.target.value })}
+          placeholder="e.g., Important DSA Concepts"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
+        />
+      </div>
+
+      {(material.type === 'link' || material.type === 'document') && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            {material.type === 'link' ? 'URL' : 'File Upload'}
+          </label>
+          {material.type === 'link' ? (
+            <input
+              type="url"
+              value={material.url}
+              onChange={(e) => onUpdate({ url: e.target.value })}
+              placeholder="https://..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
+            />
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#472183] cursor-pointer transition">
+              <Upload className="mx-auto mb-3 text-gray-400" size={32} />
+              <p className="text-gray-600 font-semibold mb-1">Click to upload or drag & drop</p>
+              <p className="text-xs text-gray-500">PDF, DOC, Image (Max 10MB)</p>
             </div>
-            <h4 className="text-xl font-bold text-primary">Material {index + 1}</h4>
-          </div>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="p-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all border border-red-200 hover:border-red-300"
-          >
-            <Trash2 size={20} />
-          </button>
+          )}
         </div>
+      )}
 
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-            Material Type
-          </label>
-          <select
-            value={material.type}
-            onChange={(e) => onUpdate({ type: e.target.value })}
-            className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium bg-white shadow-sm"
-          >
-            <option value="link">🔗 Link/Reference</option>
-            <option value="document">📄 Document/PDF</option>
-            <option value="code">💻 Code Snippet</option>
-            <option value="note">📝 Note/Tip</option>
-            <option value="resource">📚 Resource</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-            Title *
-          </label>
-          <input
-            type="text"
-            value={material.title}
-            onChange={(e) => onUpdate({ title: e.target.value })}
-            placeholder="e.g., Important DSA Concepts"
-            className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
-          />
-        </div>
-
-        {(material.type === 'link' || material.type === 'document') && (
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-              {material.type === 'link' ? '🔗 URL' : '📁 File Upload'}
-            </label>
-            {material.type === 'link' ? (
-              <input
-                type="url"
-                value={material.url}
-                onChange={(e) => onUpdate({ url: e.target.value })}
-                placeholder="https://example.com/resource"
-                className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm"
-              />
-            ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-secondary hover:bg-accent hover:bg-opacity-5 cursor-pointer transition-all bg-white">
-                <div className="w-16 h-16 rounded-full bg-accent bg-opacity-10 flex items-center justify-center mx-auto mb-4">
-                  <Upload className="text-accent" size={32} />
-                </div>
-                <p className="text-gray-700 font-bold mb-2">Click to upload or drag & drop</p>
-                <p className="text-sm text-gray-500">PDF, DOC, Image (Max 10MB)</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
-            Description
-          </label>
-          <textarea
-            value={material.description}
-            onChange={(e) => onUpdate({ description: e.target.value })}
-            placeholder="Explain why this resource is helpful and how it aided your preparation..."
-            rows="4"
-            className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-secondary focus:ring-4 focus:ring-accent focus:ring-opacity-20 transition-all font-medium placeholder-gray-400 bg-white shadow-sm resize-none"
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-3">Description</label>
+        <textarea
+          value={material.description}
+          onChange={(e) => onUpdate({ description: e.target.value })}
+          placeholder="Explain why this resource is helpful"
+          rows="3"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#472183]"
+        />
       </div>
     </div>
   )
