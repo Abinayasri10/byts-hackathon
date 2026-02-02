@@ -2,14 +2,43 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, LogOut, User, Settings, FileText } from 'lucide-react'
+import { Menu, X, LogOut, User, Settings, FileText, Briefcase } from 'lucide-react'
 
 function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
+  const [userInitial, setUserInitial] = useState('U')
+  const [workStatus, setWorkStatus] = useState(null)
   const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    // Get user initial and work status from localStorage
+    const userDataStr = localStorage.getItem('user')
+    const fullName = localStorage.getItem('fullName')
+    
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr)
+        const name = userData.fullName || userData.name || ''
+        if (name) {
+          setUserInitial(name.charAt(0).toUpperCase())
+        }
+        // Get work status from user data
+        if (userData.role && userData.company) {
+          setWorkStatus({
+            role: userData.role,
+            company: userData.company
+          })
+        }
+      } catch (err) {
+        console.error('Error parsing user data:', err)
+      }
+    } else if (fullName) {
+      setUserInitial(fullName.charAt(0).toUpperCase())
+    }
+  }, [])
 
   const navLinks = [
     { label: 'Home', path: '/home' },
@@ -36,6 +65,8 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem('authToken')
     localStorage.removeItem('userId')
+    localStorage.removeItem('user')
+    localStorage.removeItem('fullName')
     navigate('/login')
   }
 
@@ -76,6 +107,17 @@ function Navbar() {
 
           {/* Right Section */}
           <div className="flex items-center gap-4">
+            {/* Display Work Status if exists */}
+            {workStatus && (
+              <div className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-lg bg-background text-primary font-semibold shadow-md">
+                <Briefcase size={18} />
+                <div className="text-left">
+                  <div className="text-xs text-gray-600">Working at</div>
+                  <div className="text-sm font-bold">{workStatus.company}</div>
+                </div>
+              </div>
+            )}
+
             {/* Share Experience Button */}
             <Link
               to="/share-experience"
@@ -90,12 +132,22 @@ function Navbar() {
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center font-bold hover:shadow-xl transition-all hover:scale-105"
+                title="Profile Menu"
               >
-                U
+                {userInitial}
               </button>
 
               {profileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border-2 border-accent py-2 animate-in fade-in-50">
+                  {workStatus && (
+                    <>
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <p className="text-xs text-gray-600">Current Status</p>
+                        <p className="text-sm font-bold text-primary">{workStatus.role}</p>
+                        <p className="text-xs text-gray-700">{workStatus.company}</p>
+                      </div>
+                    </>
+                  )}
                   <Link
                     to="/profile"
                     className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-background hover:text-secondary transition-all font-medium"

@@ -3,12 +3,46 @@
 @theme {
   /* Deep Navy */
   --color-primary: #071952;
+  --color-primary-foreground: #ffffff;
+
   /* Deep Teal */
   --color-secondary: #088395;
+  --color-secondary-foreground: #ffffff;
+
   /* Bright Cyan/Teal */
   --color-accent: #37B7C3;
+  --color-accent-foreground: #ffffff;
+
   /* Soft Ice Blue */
   --color-background: #EBF4F6;
+  --color-foreground: #071952;
+
+  /* Card and Muted */
+  --color-card: #ffffff;
+  --color-card-foreground: #071952;
+  --color-muted: #d1e9f0;
+  --color-muted-foreground: #5a7a8a;
+
+   --color-avatar-1: #071952; /* Deep Navy */
+  --color-avatar-2: #088395; /* Deep Teal */
+  --color-avatar-3: #37B7C3; /* Bright Cyan */
+  --color-avatar-4: #0F5C7F; /* Dark Teal */
+  --color-avatar-5: #2A8FA3; /* Medium Teal */
+  --color-avatar-6: #5CB3CC; /* Light Cyan */
+/* Success & Status Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Gradient overlays */
+  --color-gradient-start: #071952;
+  --color-gradient-end: #37B7C3;
+
+  /* Borders and Inputs */
+  --color-border: #accbd6;
+  --color-input: #ffffff;
+  --color-ring: #37B7C3;
 
   /* Setting the default sans font */
   --font-sans: "Inter", "system-ui", "sans-serif";

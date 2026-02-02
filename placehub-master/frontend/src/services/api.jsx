@@ -46,4 +46,19 @@ export const experienceAPI = {
   getDraft: () => api.get('/experience/draft'),
 }
 
+// Chat APIs
+export const questionService = {
+  getQuestions: () => api.get('/questions'),
+  createQuestion: (text, sessionId) => api.post('/questions', { text, sessionId }),
+  updateStatus: (id, status) => api.patch(`/questions/${id}/status`, { status }),
+}
+
+export const answerService = {
+  getAnswers: (questionId) => api.get(`/answers/${questionId}`),
+}
+
+export const sessionService = {
+  init: (data) => api.post('/sessions/init', data),
+}
+
 export default api
