@@ -51,7 +51,7 @@ function Navbar() {
             }}
             className="flex items-center gap-3 hover:opacity-90 transition-all"
           >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg shadow-md">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg shadow-md">
               P
             </div>
             <span className="text-2xl font-bold text-primary">PlaceHub</span>
@@ -89,7 +89,7 @@ function Navbar() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center font-bold hover:shadow-xl transition-all hover:scale-105"
+                className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold hover:shadow-xl transition-all hover:scale-105"
               >
                 U
               </button>

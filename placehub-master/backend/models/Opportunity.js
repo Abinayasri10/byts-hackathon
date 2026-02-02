@@ -1,16 +1,7 @@
 import mongoose from 'mongoose'
 
 const OPPORTUNITY_TYPES = ['internship', 'full-time', 'contract', 'fellowship']
-const OPPORTUNITY_CATEGORIES = [
-  'Engineering',
-  'Product',
-  'Design',
-  'Business',
-  'Research',
-  'Operations',
-  'Consulting',
-  'General',
-]
+const OPPORTUNITY_CATEGORIES = ['Software', 'Hardware', 'Design', 'Content', 'Business', 'Others']
 const LOCATION_TYPES = ['on-site', 'hybrid', 'remote']
 const EXPERIENCE_LEVELS = ['fresher', '0-1 years', '1-3 years', '3+ years']
 

@@ -14,7 +14,7 @@ import {
 import MainLayout from '../components/MainLayout'
 import { materialsAPI } from '../services/api'
 
-const ITEMS_PER_PAGE = 9
+const ITEMS_PER_PAGE = 6
 const DEFAULT_STATS = { categoryCounts: [], topCompanies: [], tagCloud: [] }
 const DEFAULT_FILTERS = {
   categories: [],
@@ -153,49 +153,54 @@ function MaterialsRepositoryPage() {
 
   return (
     <MainLayout>
-      <div className="bg-gradient-to-b from-[#eaf2f4] via-[#f5f8f9] to-[#fbfcfd] min-h-screen">
+      <div className="bg-background min-h-screen">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-[#041532] via-[#083059] to-[#0c4a6e] text-white py-20">
-          <div className="max-w-6xl mx-auto px-6">
-            <p className="uppercase tracking-[0.3em] text-sm font-semibold text-white text-opacity-80 mb-4">
-              Centralized Materials Repository
-            </p>
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-end">
-              <div className="flex-1">
-                <h1 className="text-4xl md:text-5xl font-black leading-tight mb-4">
-                  Discover company-specific interview prep resources curated by students.
-                </h1>
-                <p className="text-lg text-white text-opacity-90 max-w-3xl">
-                  Explore structured materials aligned to companies, roles, and difficulty levels. Search, filter, and bookmark the resources that fuel your next success.
-                </p>
-              </div>
-              <div className="bg-white bg-opacity-15 rounded-2xl p-5 backdrop-blur-md border border-white border-opacity-20 shadow-2xl">
-                <div className="flex items-center gap-3 text-lg font-semibold text-black">
-                  <Bookmark size={24} className="text-accent" />
-                  <span>{pagination.total} resources curated</span>
-                </div>
-                <p className="text-sm text-opacity-80 mt-1 text-black">Updated in real-time from approved experiences</p>
+        <section className="bg-primary text-white py-20">
+          <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-end">
+            <div>
+              <p className="uppercase tracking-[0.3em] text-sm font-semibold text-white/70 mb-4">
+                Materials Repository
+              </p>
+              <h1 className="text-4xl md:text-5xl font-black leading-tight mb-4">
+                Company-ready prep decks curated by your peers.
+              </h1>
+              <p className="text-lg text-white/90 max-w-3xl">
+                Filter by company, difficulty, format, or tags to jump straight into the notes, decks, and cheat sheets that matter for your next interview sprint.
+              </p>
+              <div className="flex flex-wrap gap-4 mt-8">
+                <button
+                  onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+                  className="px-6 py-3 rounded-2xl bg-white text-primary font-semibold shadow-lg hover:-translate-y-0.5 transition"
+                >
+                  Browse repository
+                </button>
+                <a
+                  href="#materials-insights"
+                  className="px-6 py-3 rounded-2xl border-2 border-white/60 text-white font-semibold hover:bg-white/10 transition"
+                >
+                  View insights
+                </a>
               </div>
             </div>
-
-            <div className="mt-10">
-              <div className="relative">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary" size={22} />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search company, role, topic, or tag..."
-                  className="w-full pl-14 pr-4 py-4 rounded-2xl text-lg text-white shadow-2xl focus:outline-none focus:ring-4 focus:ring-accent focus:ring-opacity-40 text-ellipsis"
-                />
-                {searchInput && (
-                  <button
-                    onClick={() => setSearchInput('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-primary text-sm font-semibold"
-                  >
-                    Clear
-                  </button>
-                )}
+            <div className="bg-white/10 rounded-2xl p-6 border border-white/20 backdrop-blur">
+              <p className="text-sm uppercase tracking-[0.25em] text-white/70">Live stats</p>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-3xl font-bold">{pagination.total}</p>
+                  <p className="text-sm text-white/70">Resources</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{stats?.categoryCounts?.length || 0}</p>
+                  <p className="text-sm text-white/70">Categories</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{stats?.topCompanies?.length || 0}</p>
+                  <p className="text-sm text-white/70">Companies</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{stats?.tagCloud?.length || 0}</p>
+                  <p className="text-sm text-white/70">Tags</p>
+                </div>
               </div>
             </div>
           </div>
@@ -203,39 +208,67 @@ function MaterialsRepositoryPage() {
 
         {/* Content Section */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-16 pb-16 relative z-10">
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 lg:p-10">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 lg:p-10 space-y-8">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={20} />
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search company, topic, tag, or role"
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200"
+                  />
+                  {searchInput && (
+                    <button
+                      onClick={() => setSearchInput('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-secondary"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-primary"
+                >
+                  <option value="recent">Recently added</option>
+                  <option value="popular">Most viewed</option>
+                  <option value="liked">Most liked</option>
+                </select>
+              </div>
+            </div>
+
             <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
               {/* Sidebar */}
               <aside className="space-y-5 w-full lg:w-[320px] self-start lg:sticky lg:top-24">
-                <div className="border border-slate-200 rounded-2xl p-5 shadow-sm bg-slate-50">
-                  <div className="flex items-center gap-3 mb-4">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-4">
                     <Layers size={20} className="text-secondary" />
-                    <h3 className="text-lg font-bold text-primary">Categories</h3>
+                    <h3 className="text-lg font-semibold text-primary">Categories</h3>
                   </div>
-                  <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-                    {categoryOptions.map((category) => {
-                      const isActive = category === selectedCategory
-                      return (
-                        <button
-                          key={category}
-                          onClick={() => setSelectedCategory(category)}
-                          className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
-                            isActive
-                              ? 'bg-primary text-white shadow-lg'
-                              : 'bg-gray-50 text-gray-700 hover:bg-primary/10 hover:text-primary'
-                          }`}
-                        >
-                          <span>{category}</span>
-                          {isActive && <span className="text-xs uppercase">Active</span>}
-                        </button>
-                      )
-                    })}
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                    {categoryOptions.map((category) => (
+                      <button
+                        key={category}
+                        className={`w-full text-left px-3 py-2 rounded-2xl font-semibold transition ${
+                          selectedCategory === category
+                            ? 'bg-primary text-white shadow'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                        onClick={() => setSelectedCategory(category)}
+                      >
+                        {category}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="border border-slate-200 rounded-2xl p-5 shadow-sm bg-slate-50">
-                  <div className="flex items-center gap-3 mb-4">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-5">
+                  <div className="flex items-center gap-2 text-primary font-semibold text-lg">
                     <Filter size={20} className="text-secondary" />
-                    <h3 className="text-lg font-bold text-primary">Refine Results</h3>
+                    Refine results
                   </div>
 
                   <div className="space-y-4">
@@ -284,19 +317,6 @@ function MaterialsRepositoryPage() {
                             {formatOption}
                           </option>
                         ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs uppercase font-semibold text-slate-600">Sort</label>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-2 font-medium text-gray-700 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-                      >
-                        <option value="recent">Recently added</option>
-                        <option value="popular">Most viewed</option>
-                        <option value="liked">Most liked</option>
                       </select>
                     </div>
 
@@ -378,7 +398,7 @@ function MaterialsRepositoryPage() {
                   {stats.categoryCounts.map((category) => (
                     <div
                       key={category._id}
-                      className="rounded-2xl border border-gray-100 p-4 bg-gradient-to-br from-background to-white shadow-sm"
+                      className="rounded-2xl border border-gray-100 p-4 bg-white shadow-sm"
                     >
                       <p className="text-sm text-gray-500">{category._id}</p>
                       <p className="text-3xl font-black text-primary">{category.count}</p>
@@ -403,9 +423,9 @@ function MaterialsRepositoryPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="flex flex-col gap-6">
                   {loading && (
-                    <div className="col-span-full flex justify-center py-16">
+                    <div className="flex justify-center py-16">
                       <div className="flex items-center gap-3 text-secondary font-semibold">
                         <Loader2 className="animate-spin" />
                         Loading materials...
@@ -414,7 +434,7 @@ function MaterialsRepositoryPage() {
                   )}
 
                   {!loading && error && (
-                    <div className="col-span-full bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
                       {error}
                     </div>
                   )}
@@ -425,29 +445,38 @@ function MaterialsRepositoryPage() {
                     materials.map((material) => (
                       <article
                         key={material._id}
-                        className="relative bg-white border border-gray-100 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all"
+                        className="relative bg-white border border-gray-100 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all flex flex-col gap-5"
                       >
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                            {material.difficulty}
-                          </span>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <span className="px-2 py-1 rounded-full bg-primary/10 text-primary">
+                              {material.difficulty || 'General'}
+                            </span>
+                            {material.format && (
+                              <span className="px-2 py-1 rounded-full bg-secondary/10 text-secondary">
+                                {material.format}
+                              </span>
+                            )}
+                          </div>
+
+                          <div>
+                            <h3 className="text-2xl font-bold text-primary leading-snug">{material.title}</h3>
+                            {material.companyName && (
+                              <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
+                                <Building2 size={16} className="text-secondary" />
+                                {material.companyName}
+                              </p>
+                            )}
+                          </div>
+
+                          {material.description && (
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                              {material.description}
+                            </p>
+                          )}
                         </div>
 
-                        <h3 className="text-xl font-bold text-primary mb-2">{material.title}</h3>
-                        {material.companyName && (
-                          <p className="text-sm text-slate-600 flex items-center gap-2">
-                            <Building2 size={16} className="text-secondary" />
-                            {material.companyName}
-                          </p>
-                        )}
-
-                        {material.description && (
-                          <p className="mt-3 text-slate-600 text-sm leading-relaxed line-clamp-3">
-                            {material.description}
-                          </p>
-                        )}
-
-                        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                        <div className="flex flex-wrap gap-2 text-xs">
                           {material.category && (
                             <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-semibold">
                               {material.category}
@@ -465,13 +494,13 @@ function MaterialsRepositoryPage() {
                           ))}
                         </div>
 
-                        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-wrap gap-3 pt-2 border-t border-slate-100">
                           {material.url && (
                             <a
                               href={material.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold py-3 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-secondary text-white text-sm font-semibold px-5 py-3 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition"
                             >
                               Open <ChevronRight size={16} />
                             </a>

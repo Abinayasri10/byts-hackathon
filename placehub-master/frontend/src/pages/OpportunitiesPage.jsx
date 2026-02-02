@@ -17,7 +17,7 @@ import { opportunitiesAPI } from '../services/api'
 
 const ITEMS_PER_PAGE = 9
 const DEFAULT_FILTERS = {
-  categories: [],
+  categories: ['Software', 'Hardware', 'Design', 'Content', 'Business', 'Others'],
   companies: [],
   tags: [],
   types: [],
@@ -28,7 +28,7 @@ const DEFAULT_FILTERS = {
 const INITIAL_FORM = {
   title: '',
   companyName: '',
-  category: '',
+  category: DEFAULT_FILTERS.categories[0],
   opportunityType: 'internship',
   experienceLevel: 'fresher',
   location: '',
@@ -72,7 +72,14 @@ function OpportunitiesPage() {
       try {
         const { data } = await opportunitiesAPI.getFilters()
         if (data.success) {
-          setFilters({ ...DEFAULT_FILTERS, ...data.filters })
+          setFilters({
+            ...DEFAULT_FILTERS,
+            ...data.filters,
+            categories:
+              data.filters?.categories?.length > 0
+                ? data.filters.categories
+                : DEFAULT_FILTERS.categories,
+          })
         }
       } catch (err) {
         console.error('Failed to load filters', err)
@@ -127,7 +134,13 @@ function OpportunitiesPage() {
     fetchOpportunities()
   }, [page, searchTerm, selectedCategory, selectedType, selectedLocationType, selectedExperience, selectedCompany, sortBy])
 
-  const categoryOptions = useMemo(() => ['All', ...filters.categories], [filters.categories])
+  const categoryOptions = useMemo(() => {
+    const merged = Array.from(new Set([...DEFAULT_FILTERS.categories, ...(filters.categories || [])]))
+    return ['All', ...merged]
+  }, [filters.categories])
+  const formCategoryOptions = useMemo(() => {
+    return Array.from(new Set([...DEFAULT_FILTERS.categories, ...(filters.categories || [])]))
+  }, [filters.categories])
   const typeOptions = useMemo(() => ['all', ...filters.types], [filters.types])
   const locationOptions = useMemo(() => ['all', ...filters.locationTypes], [filters.locationTypes])
   const experienceOptions = useMemo(() => ['all', ...filters.experienceLevels], [filters.experienceLevels])
@@ -199,9 +212,9 @@ function OpportunitiesPage() {
 
   return (
     <MainLayout>
-      <div className="bg-gradient-to-b from-[#eaf2f4] via-[#f6f9fb] to-[#fbfcfd] min-h-screen">
+      <div className="bg-background min-h-screen">
         {/* Hero */}
-        <section className="bg-gradient-to-br from-[#041532] via-[#05345c] to-[#0b5a88] text-white py-20">
+        <section className="bg-primary text-white py-20">
           <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-end">
             <div>
               <p className="uppercase tracking-[0.3em] text-sm font-semibold text-white/70 mb-4">
@@ -522,7 +535,7 @@ function OpportunitiesPage() {
         {/* Submission section */}
         <section id="submit-opportunity" className="bg-white border-t border-slate-100">
           <div className="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-[1fr_0.9fr] gap-10">
-            <div className="bg-gradient-to-br from-primary to-secondary text-white rounded-3xl p-8 shadow-xl">
+            <div className="bg-primary text-white rounded-3xl p-8 shadow-xl">
               <p className="uppercase tracking-[0.3em] text-sm text-white/80">Share openings</p>
               <h2 className="text-3xl font-bold mt-4 mb-4">Seen an interesting opportunity?</h2>
               <p className="text-white/85 leading-relaxed">
@@ -581,7 +594,7 @@ function OpportunitiesPage() {
                     className="w-full mt-1 rounded-2xl border border-slate-200 px-4 py-3"
                   >
                     <option value="">Select category</option>
-                    {filters.categories.map((category) => (
+                    {formCategoryOptions.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>
