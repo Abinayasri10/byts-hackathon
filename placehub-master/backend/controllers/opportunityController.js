@@ -1,9 +1,25 @@
 import Opportunity from '../models/Opportunity.js'
+import Profile from '../models/Profile.js'
+import User from '../models/User.js'
 
 const SORT_MAP = {
   recent: { createdAt: -1 },
   closingSoon: { deadline: 1 },
-  stipendHigh: { stipendMax: -1 },
+}
+
+const deriveDisplayName = ({ profileName, email }) => {
+  if (profileName?.trim()) return profileName.trim()
+  if (email) {
+    const handle = email.split('@')[0]
+    if (handle) {
+      return handle
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    }
+  }
+  return 'PlaceHub Member'
 }
 
 const buildFilters = (query) => {
@@ -27,11 +43,6 @@ const buildFilters = (query) => {
 
   if (query.company) {
     filter.companyName = query.company
-  }
-
-  if (query.tags) {
-    const tags = Array.isArray(query.tags) ? query.tags : query.tags.split(',')
-    filter.tags = { $all: tags.map((tag) => tag.trim()).filter(Boolean) }
   }
 
   if (query.status) {
@@ -81,9 +92,34 @@ export const listOpportunities = async (req, res) => {
       ]),
     ])
 
+    const posterIds = items.map((item) => item.postedBy).filter(Boolean)
+    const profiles = posterIds.length
+      ? await Profile.find({ userId: { $in: posterIds } }, 'userId fullName').lean()
+      : []
+    const profileMap = profiles.reduce((acc, profile) => {
+      acc[profile.userId.toString()] = profile.fullName
+      return acc
+    }, {})
+    const missingUserIds = posterIds.filter((id) => !profileMap[id.toString()])
+    const userDocs = missingUserIds.length
+      ? await User.find({ _id: { $in: missingUserIds } }, 'email').lean()
+      : []
+    const userMap = userDocs.reduce((acc, user) => {
+      acc[user._id.toString()] = user.email
+      return acc
+    }, {})
+
+    const opportunitiesWithNames = items.map((item) => {
+      const key = item.postedBy ? item.postedBy.toString() : ''
+      return {
+        ...item,
+        postedByName: item.postedByName || deriveDisplayName({ profileName: profileMap[key], email: userMap[key] }),
+      }
+    })
+
     return res.json({
       success: true,
-      opportunities: items,
+      opportunities: opportunitiesWithNames,
       pagination: {
         page,
         limit,
@@ -100,10 +136,9 @@ export const listOpportunities = async (req, res) => {
 
 export const getOpportunityFilters = async (_req, res) => {
   try {
-    const [categories, companies, tags, types, locationTypes, experienceLevels] = await Promise.all([
+    const [categories, companies, types, locationTypes, experienceLevels] = await Promise.all([
       Opportunity.distinct('category', { status: 'active' }),
       Opportunity.distinct('companyName', { status: 'active' }),
-      Opportunity.distinct('tags', { status: 'active' }),
       Opportunity.distinct('opportunityType', { status: { $exists: true } }),
       Opportunity.distinct('locationType', { status: { $exists: true } }),
       Opportunity.distinct('experienceLevel', { status: { $exists: true } }),
@@ -114,7 +149,6 @@ export const getOpportunityFilters = async (_req, res) => {
       filters: {
         categories,
         companies,
-        tags: tags.filter(Boolean),
         types,
         locationTypes,
         experienceLevels,
@@ -128,9 +162,20 @@ export const getOpportunityFilters = async (_req, res) => {
 
 export const getOpportunityById = async (req, res) => {
   try {
-    const opportunity = await Opportunity.findById(req.params.id)
+    const opportunity = await Opportunity.findById(req.params.id).lean()
     if (!opportunity) {
       return res.status(404).json({ success: false, message: 'Opportunity not found' })
+    }
+
+    if (opportunity.postedBy) {
+      const key = opportunity.postedBy.toString()
+      if (!opportunity.postedByName) {
+        const [profile, user] = await Promise.all([
+          Profile.findOne({ userId: opportunity.postedBy }, 'fullName').lean(),
+          User.findById(opportunity.postedBy, 'email').lean(),
+        ])
+        opportunity.postedByName = deriveDisplayName({ profileName: profile?.fullName, email: user?.email })
+      }
     }
 
     return res.json({ success: true, opportunity })
@@ -142,9 +187,19 @@ export const getOpportunityById = async (req, res) => {
 
 export const createOpportunity = async (req, res) => {
   try {
+    const userId = req.user?.userId
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+
+    const [profile, user] = await Promise.all([
+      Profile.findOne({ userId }).lean(),
+      User.findById(userId, 'email').lean(),
+    ])
     const payload = {
       ...req.body,
-      postedBy: req.user?._id,
+      postedBy: userId,
+      postedByName: deriveDisplayName({ profileName: profile?.fullName, email: user?.email }),
     }
 
     const opportunity = await Opportunity.create(payload)

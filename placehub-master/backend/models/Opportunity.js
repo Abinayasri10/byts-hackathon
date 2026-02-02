@@ -41,25 +41,12 @@ const opportunitySchema = new mongoose.Schema(
       enum: LOCATION_TYPES,
       default: 'hybrid',
     },
-    stipendMin: Number,
-    stipendMax: Number,
-    currency: {
-      type: String,
-      default: 'INR',
-    },
-    salaryNotes: String,
     applicationUrl: String,
-    applicationEmail: String,
     deadline: Date,
-    tags: {
-      type: [String],
-      default: [],
-    },
     skills: {
       type: [String],
       default: [],
     },
-    description: String,
     responsibilities: String,
     perks: {
       type: [String],
@@ -74,6 +61,10 @@ const opportunitySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
+    postedByName: {
+      type: String,
+      trim: true,
+    },
     source: String,
   },
   {
@@ -85,7 +76,6 @@ opportunitySchema.index({
   title: 'text',
   companyName: 'text',
   category: 'text',
-  tags: 'text',
   skills: 'text',
 })
 

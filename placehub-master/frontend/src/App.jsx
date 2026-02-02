@@ -11,11 +11,14 @@ import MaterialsRepositoryPage from './pages/MaterialsRepositoryPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
 import OpportunitiesPage from './pages/OpportunitiesPage.jsx'
+import SubmitOpportunityPage from './pages/SubmitOpportunityPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import ScrollToTop from './components/ScrollToTop.jsx'
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
@@ -50,6 +53,10 @@ function App() {
         <Route 
           path="/opportunities" 
           element={<ProtectedRoute><OpportunitiesPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/opportunities/submit" 
+          element={<ProtectedRoute><SubmitOpportunityPage /></ProtectedRoute>} 
         />
         <Route 
           path="/about" 
