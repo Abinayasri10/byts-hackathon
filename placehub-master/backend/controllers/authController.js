@@ -1,8 +1,8 @@
 import User from '../models/User.js'
 import jwt from 'jsonwebtoken'
 
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
+const generateToken = (userId, role) => {
+  return jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' })
 }
 
 export const signup = async (req, res) => {
@@ -39,13 +39,14 @@ export const signup = async (req, res) => {
     await user.save()
 
     // Generate token
-    const token = generateToken(user._id)
+    const token = generateToken(user._id, user.role)
 
     res.status(201).json({
       success: true,
       message: 'User created successfully',
       token,
       userId: user._id,
+      role: user.role,
     })
   } catch (error) {
     res.status(500).json({
@@ -86,19 +87,53 @@ export const login = async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user._id)
+    const token = generateToken(user._id, user.role)
 
     res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
       userId: user._id,
+      role: user.role,
       profileCompleted: user.profileCompleted,
+      preferences: user.preferences
     })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
     })
+  }
+}
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password')
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+    res.status(200).json({
+      success: true,
+      user
+    })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+export const updatePreferences = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $set: { preferences: req.body } },
+      { new: true }
+    ).select('-password')
+
+    res.status(200).json({
+      success: true,
+      preferences: user.preferences
+    })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
   }
 }

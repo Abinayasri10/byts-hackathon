@@ -29,6 +29,30 @@ const profileSchema = new mongoose.Schema({
     enum: ['internship', 'full-time'],
   },
   willingToMentor: Boolean,
+  mentorshipSettings: {
+    availableForChat: {
+      type: Boolean,
+      default: false,
+    },
+    availableForCall: {
+      type: Boolean,
+      default: false,
+    },
+    availableForMeeting: {
+      type: Boolean,
+      default: false,
+    },
+    preferredDomains: [String],
+    yearOfPlacement: Number,
+  },
+  juniorSettings: {
+    preferredDomain: String,
+    targetCompanies: [String],
+    placementStage: {
+      type: String,
+      enum: ['preparation', 'interview', 'offer'],
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

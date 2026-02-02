@@ -17,10 +17,20 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
+  preferences: {
+    adminDashboardView: { type: String, default: 'overview' },
+    adminDashboardSubView: { type: String, default: null },
+    theme: { type: String, default: 'light' }
+  }
 })
 
 // Hash password before saving
