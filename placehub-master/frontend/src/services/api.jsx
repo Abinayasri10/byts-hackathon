@@ -54,4 +54,12 @@ export const materialsAPI = {
   getById: (id) => api.get(`/materials/${id}`),
 }
 
+// Opportunities APIs
+export const opportunitiesAPI = {
+  list: (params = {}) => api.get('/opportunities', { params }),
+  getFilters: () => api.get('/opportunities/filters'),
+  getById: (id) => api.get(`/opportunities/${id}`),
+  create: (data) => api.post('/opportunities', data),
+}
+
 export default api

@@ -10,6 +10,7 @@ import ExperienceMaterialsForm from './pages/ExperienceMaterialsForm.jsx'
 import MaterialsRepositoryPage from './pages/MaterialsRepositoryPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
+import OpportunitiesPage from './pages/OpportunitiesPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 function App() {
@@ -45,6 +46,10 @@ function App() {
         <Route 
           path="/materials" 
           element={<ProtectedRoute><MaterialsRepositoryPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/opportunities" 
+          element={<ProtectedRoute><OpportunitiesPage /></ProtectedRoute>} 
         />
         <Route 
           path="/about" 

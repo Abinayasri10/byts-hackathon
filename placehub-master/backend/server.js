@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes.js'
 import profileRoutes from './routes/profileRoutes.js'
 import experienceRoutes from './routes/experienceRoutes.js'
 import materialRoutes from './routes/materialRoutes.js'
+import opportunityRoutes from './routes/opportunityRoutes.js'
 
 dotenv.config()
 
@@ -25,8 +26,9 @@ mongoose
 // Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/profile', profileRoutes)
-app.use('/api/experience', experienceRoutes)
+app.use('/api/experiences', experienceRoutes)
 app.use('/api/materials', materialRoutes)
+app.use('/api/opportunities', opportunityRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
