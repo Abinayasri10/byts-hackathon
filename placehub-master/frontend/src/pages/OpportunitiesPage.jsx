@@ -144,51 +144,51 @@ function OpportunitiesPage() {
     <MainLayout>
       <div className="bg-background min-h-screen">
         {/* Hero */}
-        <section className="bg-primary text-white py-20">
+        <section className="py-20 bg-[#dfeff4] text-[#071952]">
           <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-end">
             <div>
-              <p className="uppercase tracking-[0.3em] text-sm font-semibold text-white/70 mb-4">
+              <p className="uppercase tracking-[0.3em] text-sm font-semibold text-[#071952]/70 mb-4">
                 Opportunities Board
               </p>
               <h1 className="text-4xl md:text-5xl font-black leading-tight mb-4">
                 Internships and full-time roles sourced directly from students.
               </h1>
-              <p className="text-lg text-white/90 max-w-3xl">
+              <p className="text-lg text-[#071952]/80 max-w-3xl">
                 Crowd-sourced openings with deadlines, stipend insights, and must-have skills. Filter, search, and apply in minutes.
               </p>
               <div className="flex flex-wrap gap-4 mt-8">
                 <Link
                   to="/opportunities/submit"
-                  className="px-6 py-3 rounded-2xl bg-white text-primary font-semibold shadow-lg hover:-translate-y-0.5 transition"
+                  className="px-6 py-3 rounded-2xl bg-[#071952] text-white font-semibold shadow-lg hover:bg-[#0a2f4b] transition"
                 >
                   Submit an opportunity
                 </Link>
                 <button
                   onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-                  className="px-6 py-3 rounded-2xl border-2 border-white/60 text-white font-semibold hover:bg-white/10 transition"
+                  className="px-6 py-3 rounded-2xl border-2 border-[#071952] text-[#071952] font-semibold hover:bg-white/40 transition"
                 >
                   Browse latest roles
                 </button>
               </div>
             </div>
-            <div className="bg-white/10 rounded-2xl p-6 border border-white/20 backdrop-blur">
-              <p className="text-sm uppercase tracking-[0.25em] text-white/70">Live stats</p>
+            <div className="bg-white rounded-2xl p-6 border border-[#cfe3ea] shadow-sm">
+              <p className="text-sm uppercase tracking-[0.25em] text-[#071952]/70">Live stats</p>
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-3xl font-bold">{pagination.total}</p>
-                  <p className="text-sm text-white/70">Open roles</p>
+                  <p className="text-3xl font-bold text-[#071952]">{pagination.total}</p>
+                  <p className="text-sm text-[#071952]/70">Open roles</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold">{stats?.categoryCounts?.length || 0}</p>
-                  <p className="text-sm text-white/70">Categories</p>
+                  <p className="text-3xl font-bold text-[#071952]">{stats?.categoryCounts?.length || 0}</p>
+                  <p className="text-sm text-[#071952]/70">Categories</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold">{stats?.typeCounts?.length || 0}</p>
-                  <p className="text-sm text-white/70">Opportunity types</p>
+                  <p className="text-3xl font-bold text-[#071952]">{stats?.typeCounts?.length || 0}</p>
+                  <p className="text-sm text-[#071952]/70">Opportunity types</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold">{stats?.locations?.length || 0}</p>
-                  <p className="text-sm text-white/70">Locations</p>
+                  <p className="text-3xl font-bold text-[#071952]">{stats?.locations?.length || 0}</p>
+                  <p className="text-sm text-[#071952]/70">Locations</p>
                 </div>
               </div>
             </div>
@@ -199,9 +199,9 @@ function OpportunitiesPage() {
         <section className="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-[290px_1fr] gap-8">
           {/* Sidebar */}
           <aside className="space-y-6">
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+            <div className="bg-white rounded-3xl border border-[#d8e5ec] shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-primary">Categories</h3>
+                <h3 className="text-lg font-semibold text-[#071952]">Categories</h3>
                 {filtersLoading && <span className="text-xs text-slate-400">Loading...</span>}
               </div>
               <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
@@ -210,7 +210,7 @@ function OpportunitiesPage() {
                     key={category}
                     className={`w-full text-left px-3 py-2 rounded-2xl font-semibold transition ${
                       selectedCategory === category
-                        ? 'bg-primary text-white shadow'
+                        ? 'bg-[#071952] text-white shadow'
                         : 'text-slate-600 hover:bg-slate-50'
                     }`}
                     onClick={() => setSelectedCategory(category)}
@@ -221,8 +221,8 @@ function OpportunitiesPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-5">
-              <div className="flex items-center gap-2 text-primary font-semibold text-lg">
+            <div className="bg-white rounded-3xl border border-[#d8e5ec] shadow-sm p-6 space-y-5">
+              <div className="flex items-center gap-2 text-[#071952] font-semibold text-lg">
                 <Filter size={18} /> Refine results
               </div>
 
@@ -280,8 +280,8 @@ function OpportunitiesPage() {
                       onClick={() => setSelectedCompany((prev) => (prev === company ? '' : company))}
                       className={`px-3 py-1 rounded-full border text-xs font-semibold transition ${
                         selectedCompany === company
-                          ? 'bg-secondary text-white border-secondary'
-                          : 'border-slate-200 text-slate-600 hover:border-secondary'
+                          ? 'bg-[#088395] text-white border-[#088395]'
+                          : 'border-slate-200 text-slate-600 hover:border-[#088395]'
                       }`}
                     >
                       {company}
@@ -292,13 +292,13 @@ function OpportunitiesPage() {
 
               <button
                 onClick={handleResetFilters}
-                className="w-full px-4 py-2 rounded-2xl border border-slate-200 text-sm font-semibold hover:bg-slate-50"
+                className="w-full px-4 py-2 rounded-2xl border border-[#c7dce6] text-sm font-semibold hover:bg-[#f3f8fb]"
               >
                 Reset filters
               </button>
             </div>
 
-            <div className="bg-primary text-white rounded-3xl p-6 shadow-lg">
+            <div className="rounded-3xl p-6 shadow-lg text-white bg-[#08223d]">
               <p className="text-sm uppercase tracking-[0.25em] text-white/70">Insights</p>
               <div className="mt-4 space-y-4">
                 {stats?.categoryCounts?.slice(0, 3).map((entry) => (
@@ -313,7 +313,7 @@ function OpportunitiesPage() {
 
           {/* Main content */}
           <div className="space-y-8">
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
+            <div className="bg-white rounded-3xl border border-[#d8e5ec] shadow-sm p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={20} />
@@ -336,7 +336,7 @@ function OpportunitiesPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-primary"
+                  className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold text-[#071952]"
                 >
                   <option value="recent">Recently added</option>
                   <option value="closingSoon">Closing soon</option>
@@ -357,16 +357,16 @@ function OpportunitiesPage() {
                 opportunities.map((opp) => (
                   <div
                     key={opp._id}
-                    className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col gap-4"
+                    className="bg-white rounded-3xl border border-[#d8e5ec] shadow-sm p-6 flex flex-col gap-4"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                          <span className="px-2 py-1 rounded-full bg-primary/10 text-primary">
+                          <span className="px-2 py-1 rounded-full bg-[#071952]/10 text-[#071952]">
                             {formatLabel(opp.opportunityType)}
                           </span>
                           {opp.locationType && (
-                            <span className="px-2 py-1 rounded-full bg-secondary/10 text-secondary">
+                            <span className="px-2 py-1 rounded-full bg-[#088395]/10 text-[#088395]">
                               {formatLabel(opp.locationType)}
                             </span>
                           )}
@@ -382,7 +382,7 @@ function OpportunitiesPage() {
                           <span>{opp.companyName}</span>
                         </div>
                       </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-secondary/10 text-secondary">
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#088395]/15 text-[#088395]">
                         {opp.category}
                       </span>
                     </div>
@@ -399,7 +399,7 @@ function OpportunitiesPage() {
                     {opp.skills?.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {opp.skills.slice(0, 4).map((skill) => (
-                          <span key={skill} className="px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                          <span key={skill} className="px-3 py-1 rounded-full bg-[#e6f3f6] text-xs font-semibold text-[#0c566a]">
                             {skill}
                           </span>
                         ))}
@@ -418,7 +418,7 @@ function OpportunitiesPage() {
                           href={opp.applicationUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-white font-semibold px-5 py-3"
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#071952] text-white font-semibold px-5 py-3"
                         >
                           Apply now
                         </a>
@@ -430,7 +430,7 @@ function OpportunitiesPage() {
             </div>
 
             {opportunities.length > 0 && !loading && (
-              <div className="flex items-center justify-between bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
+              <div className="flex items-center justify-between bg-white rounded-3xl border border-[#d8e5ec] shadow-sm p-5">
                 <p className="text-sm text-slate-600">
                   Showing page {pagination.page} of {pagination.pages}
                 </p>
@@ -438,14 +438,14 @@ function OpportunitiesPage() {
                   <button
                     disabled={pagination.page === 1}
                     onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold disabled:opacity-40"
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-[#071952] disabled:opacity-40"
                   >
                     Previous
                   </button>
                   <button
                     disabled={pagination.page >= pagination.pages}
                     onClick={() => setPage((prev) => Math.min(pagination.pages, prev + 1))}
-                    className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-40"
+                    className="px-4 py-2 rounded-xl bg-[#071952] text-white text-sm font-semibold disabled:opacity-40"
                   >
                     Next
                   </button>
@@ -456,31 +456,31 @@ function OpportunitiesPage() {
         </section>
 
         {/* Submission CTA */}
-        <section className="bg-white border-t border-slate-100">
+        <section className="border-t border-slate-100 bg-[#e7f3f6]">
           <div className="max-w-6xl mx-auto px-6 py-12 grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-center">
             <div className="space-y-4">
-              <p className="uppercase tracking-[0.35em] text-xs text-primary">Share openings</p>
-              <h2 className="text-3xl font-bold text-slate-900">Seen an interesting role? Help juniors spot it faster.</h2>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="uppercase tracking-[0.35em] text-xs text-[#071952]">Share openings</p>
+              <h2 className="text-3xl font-bold text-[#071952]">Seen an interesting role? Help juniors spot it faster.</h2>
+              <p className="text-[#06364b] leading-relaxed">
                 Track off-campus drives, referral-ready opportunities, or fellowships you or your friends come across. Submissions go through a quick moderation pass before showing up on the board.
               </p>
-              <ul className="grid sm:grid-cols-2 gap-4 text-sm text-slate-600">
-                <li className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                  <span className="block font-semibold text-primary">12h moderation</span>
+              <ul className="grid sm:grid-cols-2 gap-4 text-sm text-[#06364b]">
+                <li className="bg-white rounded-2xl p-4 border border-[#cfe3ea]">
+                  <span className="block font-semibold text-[#088395]">12h moderation</span>
                   <span>Listings are reviewed quickly so the board stays trustworthy.</span>
                 </li>
-                <li className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                  <span className="block font-semibold text-primary">Smart routing</span>
+                <li className="bg-white rounded-2xl p-4 border border-[#cfe3ea]">
+                  <span className="block font-semibold text-[#088395]">Smart routing</span>
                   <span>We highlight each role to the right batches and cohorts.</span>
                 </li>
               </ul>
             </div>
-            <div className="bg-primary text-white rounded-3xl p-8 shadow-xl">
+            <div className="rounded-3xl p-8 shadow-xl text-white bg-[#08223d]">
               <h3 className="text-2xl font-semibold">Ready to submit?</h3>
               <p className="text-white/80 mt-2">Use the dedicated submission page to add details like deadlines, skills, and application links.</p>
               <Link
                 to="/opportunities/submit"
-                className="mt-6 inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-white text-primary font-semibold shadow-lg hover:-translate-y-0.5 transition"
+                className="mt-6 inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-white text-[#071952] font-semibold shadow-lg hover:-translate-y-0.5 transition"
               >
                 Go to submission page
               </Link>

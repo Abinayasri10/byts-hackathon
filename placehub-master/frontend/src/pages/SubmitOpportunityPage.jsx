@@ -113,20 +113,21 @@ function SubmitOpportunityPage() {
   return (
     <MainLayout>
       <div className="bg-background min-h-screen">
-        <section className="bg-white py-12 border-b border-slate-100">
+        <section className="py-12 border-b border-slate-100 bg-[#dfeff4] text-[#071952]">
           <div className="max-w-3xl mx-auto px-6 text-center space-y-3">
-            <p className="uppercase tracking-[0.4em] text-xs text-primary">Submit Opportunity</p>
-            <h1 className="text-4xl font-black text-slate-900">Add a new role to the PlaceHub board</h1>
-            <p className="text-slate-600 text-base">
+            <p className="uppercase tracking-[0.4em] text-xs text-[#071952]/70">Submit Opportunity</p>
+            <h1 className="text-4xl font-black">Add a new role to the PlaceHub board</h1>
+            <p className="text-[#071952]/80 text-base">
               Fill in the details below and we will publish it after a quick moderation pass.
             </p>
           </div>
         </section>
 
         <section className="max-w-4xl mx-auto px-6 py-12">
-          <form onSubmit={handleFormSubmit} className="bg-white rounded-3xl border border-slate-100 p-8 shadow-xl space-y-5">
-              <div className="flex items-center gap-3 text-primary font-semibold text-lg">
-                <Send size={20} /> Opportunity details
+          <form onSubmit={handleFormSubmit} className="bg-white rounded-3xl border border-[#d8e5ec] p-8 shadow-2xl space-y-5">
+              <div className="flex items-center gap-3 font-semibold text-lg text-[#071952]">
+                <Send size={20} className="text-[#088395]" />
+                <span>Opportunity details</span>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -137,7 +138,7 @@ function SubmitOpportunityPage() {
                     value={formData.title}
                     onChange={handleFormChange}
                     required
-                    className="w-full mt-1 rounded-2xl border border-slate-200 px-4 py-3"
+                    className="w-full mt-1 rounded-2xl border border-[#d6e6ed] focus:ring-2 focus:ring-[#088395] px-4 py-3"
                     placeholder="Software Engineer"
                   />
                 </div>
@@ -148,7 +149,7 @@ function SubmitOpportunityPage() {
                     value={formData.companyName}
                     onChange={handleFormChange}
                     required
-                    className="w-full mt-1 rounded-2xl border border-slate-200 px-4 py-3"
+                    className="w-full mt-1 rounded-2xl border border-[#d6e6ed] focus:ring-2 focus:ring-[#088395] px-4 py-3"
                     placeholder="Company name"
                   />
                 </div>
@@ -161,7 +162,7 @@ function SubmitOpportunityPage() {
                     name="category"
                     value={formData.category}
                     onChange={handleFormChange}
-                    className="w-full mt-1 rounded-2xl border border-slate-200 px-4 py-3"
+                    className="w-full mt-1 rounded-2xl border border-[#d6e6ed] focus:ring-2 focus:ring-[#088395] px-4 py-3"
                   >
                     {formCategoryOptions.map((category) => (
                       <option key={category} value={category}>
@@ -177,7 +178,7 @@ function SubmitOpportunityPage() {
                       name="opportunityType"
                       value={formData.opportunityType}
                       onChange={handleFormChange}
-                      className="w-full mt-1 rounded-2xl border border-slate-200 px-4 py-3"
+                      className="w-full mt-1 rounded-2xl border border-[#d6e6ed] focus:ring-2 focus:ring-[#088395] px-4 py-3"
                     >
                       {typeOptions.map((type) => (
                         <option key={type} value={type}>
@@ -270,7 +271,7 @@ function SubmitOpportunityPage() {
               <button
                 type="submit"
                 disabled={formStatus === 'submitting'}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-white font-semibold py-3 shadow-lg disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#071952] text-white font-semibold py-3 shadow-lg hover:bg-[#09335c] disabled:opacity-50"
               >
                 {formStatus === 'submitting' ? 'Posting…' : 'Share with PlaceHub'}
               </button>
