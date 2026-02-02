@@ -221,7 +221,7 @@ function EditProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -235,7 +235,7 @@ function EditProfile() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Roll Number
+                    Roll Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -248,7 +248,7 @@ function EditProfile() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    College Email
+                    College Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -279,7 +279,7 @@ function EditProfile() {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Academic Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year <span className="text-red-500">*</span></label>
                   <select
                     name="year"
                     value={formData.year}
@@ -297,7 +297,7 @@ function EditProfile() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Branch
+                    Branch <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="branch"
@@ -316,7 +316,7 @@ function EditProfile() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Batch
+                    Batch <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
