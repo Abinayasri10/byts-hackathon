@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import MainLayout from '../components/MainLayout'
 import { TrendingUp, BookOpen, Users, Briefcase, ArrowRight, Star } from 'lucide-react'
-
+import ChatWidgetButton from '../components/chat/ChatWidgetButton'
+import ChatContainer from '../components/chat/ChatContainer'
 function DashboardPage() {
   const [experiences, setExperiences] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   useEffect(() => {
     // Simulate fetching data
@@ -202,13 +204,13 @@ function DashboardPage() {
                   <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-accent opacity-10 group-hover:opacity-20 transition-opacity"></div>
                   <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-secondary opacity-15 group-hover:opacity-25 transition-opacity"></div>
                   <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-primary opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                  
+
                   <div className="p-6 relative z-10">
                     <div className="mb-4">
                       <h3 className="text-2xl font-bold text-primary mb-2">{exp.company}</h3>
                       <p className="text-gray-600 text-lg font-medium">{exp.role}</p>
                     </div>
-                    
+
                     <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
                       <span className="text-sm text-gray-500 font-medium bg-background px-3 py-1 rounded-full">
                         Batch {exp.batch}
@@ -218,17 +220,16 @@ function DashboardPage() {
                         <span className="font-semibold text-gray-700">{exp.rating}</span>
                       </div>
                     </div>
-                    
+
                     <div className="mb-4">
-                      <span className={`inline-block px-4 py-1.5 rounded-full text-xs font-semibold ${
-                        exp.difficulty === 'Hard' ? 'bg-red-50 text-red-700 border border-red-200' :
+                      <span className={`inline-block px-4 py-1.5 rounded-full text-xs font-semibold ${exp.difficulty === 'Hard' ? 'bg-red-50 text-red-700 border border-red-200' :
                         exp.difficulty === 'Medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                        'bg-green-50 text-green-700 border border-green-200'
-                      }`}>
+                          'bg-green-50 text-green-700 border border-green-200'
+                        }`}>
                         {exp.difficulty} Difficulty
                       </span>
                     </div>
-                    
+
                     <button className="w-full px-4 py-2.5 rounded-lg bg-secondary text-white font-semibold hover:bg-accent transition shadow-md hover:shadow-lg">
                       Read Experience
                     </button>
@@ -301,6 +302,14 @@ function DashboardPage() {
           </div>
         </section>
       </div>
+      <ChatWidgetButton isOpen={isChatOpen} onToggle={() => setIsChatOpen(!isChatOpen)} />
+
+      {isChatOpen && (
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <ChatContainer />
+        </div>
+      )}
+
     </MainLayout>
   )
 }

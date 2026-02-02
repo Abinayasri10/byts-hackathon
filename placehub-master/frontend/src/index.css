@@ -3,12 +3,30 @@
 @theme {
   /* Deep Navy */
   --color-primary: #071952;
+  --color-primary-foreground: #ffffff;
+
   /* Deep Teal */
   --color-secondary: #088395;
+  --color-secondary-foreground: #ffffff;
+
   /* Bright Cyan/Teal */
   --color-accent: #37B7C3;
+  --color-accent-foreground: #ffffff;
+
   /* Soft Ice Blue */
   --color-background: #EBF4F6;
+  --color-foreground: #071952;
+
+  /* Card and Muted */
+  --color-card: #ffffff;
+  --color-card-foreground: #071952;
+  --color-muted: #d1e9f0;
+  --color-muted-foreground: #5a7a8a;
+
+  /* Borders and Inputs */
+  --color-border: #accbd6;
+  --color-input: #ffffff;
+  --color-ring: #37B7C3;
 
   /* Setting the default sans font */
   --font-sans: "Inter", "system-ui", "sans-serif";
