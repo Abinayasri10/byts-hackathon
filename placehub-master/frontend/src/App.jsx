@@ -72,6 +72,10 @@ function App() {
           element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
         />
         <Route
+          path="/my-experiences"
+          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
+        />
+        <Route
           path="/meeting/:meetingId"
           element={<ProtectedRoute><VideoMeetingPage /></ProtectedRoute>}
         />
