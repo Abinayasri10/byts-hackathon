@@ -7,6 +7,9 @@ import ShareExperienceLanding from './pages/ShareExperienceLanding.jsx'
 import ExperienceMetadataForm from './pages/ExperienceMetadataForm.jsx'
 import ExperienceRoundsForm from './pages/ExperienceRoundsForm.jsx'
 import ExperienceMaterialsForm from './pages/ExperienceMaterialsForm.jsx'
+import MaterialsRepositoryPage from './pages/MaterialsRepositoryPage.jsx'
+import AboutPage from './pages/AboutPage.jsx'
+import ContactPage from './pages/ContactPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 function App() {
@@ -38,6 +41,18 @@ function App() {
         <Route 
           path="/share-experience/materials" 
           element={<ProtectedRoute><ExperienceMaterialsForm /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/materials" 
+          element={<ProtectedRoute><MaterialsRepositoryPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/about" 
+          element={<ProtectedRoute><AboutPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/contact" 
+          element={<ProtectedRoute><ContactPage /></ProtectedRoute>} 
         />
         <Route path="/" element={<Navigate to="/home" replace />} />
       </Routes>

@@ -1,11 +1,89 @@
 import Experience from '../models/Experience.js'
+import Material from '../models/Material.js'
+
+const normalizeStringArray = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => (typeof entry === 'string' ? entry.trim() : entry))
+      .filter(Boolean)
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
+const deriveDifficultyLabel = (materialDifficulty, experienceDifficulty) => {
+  if (materialDifficulty && ['beginner', 'intermediate', 'advanced'].includes(materialDifficulty)) {
+    return materialDifficulty
+  }
+
+  if (!experienceDifficulty) return 'beginner'
+  if (experienceDifficulty <= 2) return 'beginner'
+  if (experienceDifficulty === 3) return 'intermediate'
+  return 'advanced'
+}
+
+const mapMaterialPayload = (experience, materialItem, sourceMaterialId) => ({
+  title:
+    materialItem.title?.trim() ||
+    `${experience.companyName || 'Interview'} Preparation Resource`,
+  description: materialItem.description,
+  type: materialItem.type || 'link',
+  category: materialItem.category || 'General',
+  topics: normalizeStringArray(materialItem.topics),
+  tags: normalizeStringArray(materialItem.tags),
+  difficulty: deriveDifficultyLabel(materialItem.difficulty, experience.difficultyRating),
+  format:
+    materialItem.format ||
+    (materialItem.type === 'document'
+      ? 'cheatsheet'
+      : materialItem.type === 'code'
+      ? 'project'
+      : 'guide'),
+  estimatedTime: materialItem.estimatedTime,
+  url: materialItem.url,
+  companyName: experience.companyName,
+  roleFocus: experience.roleAppliedFor,
+  batch: experience.batch,
+  placementSeason: experience.placementSeason,
+  addedBy: experience.userId,
+  sourceExperience: experience._id,
+  sourceMaterialId,
+  status: experience.status === 'approved' ? 'approved' : 'pending',
+})
+
+const syncMaterialsFromExperience = async (experience) => {
+  if (!experience?.materials?.length) return
+
+  const operations = experience.materials.map((materialItem, index) => {
+    const sourceMaterialId =
+      materialItem.id?.toString() ||
+      materialItem._id?.toString() ||
+      `${experience._id.toString()}-${index}`
+
+    const payload = mapMaterialPayload(experience, materialItem, sourceMaterialId)
+
+    return Material.findOneAndUpdate(
+      { sourceExperience: experience._id, sourceMaterialId },
+      { $set: payload },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+  })
+
+  await Promise.all(operations)
+}
 
 // Create experience
 export const createExperience = async (req, res) => {
   try {
     // 1. Destructure _id out so it's NOT included in ...otherData
     const { _id, companyName, roleAppliedFor, batch, ...otherData } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id || req.user?.userId;
 
     // Validation
     if (!companyName || !roleAppliedFor || !batch) {
@@ -26,6 +104,7 @@ export const createExperience = async (req, res) => {
     });
 
     await experience.save();
+    await syncMaterialsFromExperience(experience);
 
     // 3. OPTIONAL BUT RECOMMENDED: Delete the draft now that it's submitted
     await Experience.deleteOne({ userId, status: 'draft' });
@@ -48,7 +127,7 @@ export const createExperience = async (req, res) => {
 // Get user's own experiences
 export const getUserExperiences = async (req, res) => {
   try {
-    const userId = req.user.id
+    const userId = req.user?.id || req.user?.userId
 
     const experiences = await Experience.find({ userId })
       .sort({ createdAt: -1 })
@@ -141,7 +220,7 @@ export const getExperienceById = async (req, res) => {
 export const updateExperience = async (req, res) => {
   try {
     const { id } = req.params
-    const userId = req.user.id
+    const userId = req.user?.id || req.user?.userId
 
     // Find experience
     const experience = await Experience.findById(id)
@@ -192,7 +271,7 @@ export const updateExperience = async (req, res) => {
 export const deleteExperience = async (req, res) => {
   try {
     const { id } = req.params
-    const userId = req.user.id
+    const userId = req.user?.id || req.user?.userId
 
     const experience = await Experience.findById(id)
 
@@ -212,6 +291,7 @@ export const deleteExperience = async (req, res) => {
     }
 
     await Experience.findByIdAndDelete(id)
+    await Material.deleteMany({ sourceExperience: id })
 
     res.json({
       success: true,

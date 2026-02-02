@@ -46,4 +46,12 @@ export const experienceAPI = {
   getDraft: () => api.get('/experience/draft'),
 }
 
+// Materials Repository APIs
+export const materialsAPI = {
+  list: (params = {}) => api.get('/materials', { params }),
+  getFilters: () => api.get('/materials/filters/options'),
+  create: (data) => api.post('/materials', data),
+  getById: (id) => api.get(`/materials/${id}`),
+}
+
 export default api
