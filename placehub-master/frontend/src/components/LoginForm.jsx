@@ -57,12 +57,12 @@ function LoginForm({ onSubmit, isLoading }) {
             onChange={handleChange}
             placeholder="Enter your password"
             required
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 transition"
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 transition pr-10"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-primary transition"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
           >
             {showPassword ? (
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -77,9 +77,10 @@ function LoginForm({ onSubmit, isLoading }) {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
-                  d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-14-14zM10 4.5c-3.6 0-6.8 2.3-8 5.5 1.2 3.2 4.4 5.5 8 5.5 1.1 0 2.2-.2 3.2-.6l-1.8-1.8c-.5.1-1 .2-1.4.2-2.2 0-4-1.8-4-4s1.8-4 4-4c.5 0 .9.1 1.4.2l1.8-1.8c-1-.4-2.1-.6-3.2-.6z"
+                  d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
                   clipRule="evenodd"
                 />
+                <path d="M15.171 13.576l1.473 1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l1.473 1.474A4 4 0 0110 7c2.206 0 4 1.794 4 4 0 .364-.057.71-.162 1.041z" />
               </svg>
             )}
           </button>

@@ -42,7 +42,7 @@ function PersonalDetailsStep({ formData, onChange }) {
         <label className="block text-sm font-medium text-gray-700 mb-2">College Email *</label>
         <input
           type="email"
-          name="collegeEmail"
+          name="Email"
           value={formData.collegeEmail}
           onChange={handleChange}
           placeholder="your.email@college.edu"
@@ -74,6 +74,35 @@ function PersonalDetailsStep({ formData, onChange }) {
           />
         </div>
         <p className="text-xs text-gray-500 mt-1">Enter 10-digit mobile number</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture *</label>
+        <div className="flex items-center gap-4">
+          {formData.profilePicture && (
+            <div className="flex-shrink-0">
+              <img
+                src={typeof formData.profilePicture === 'string' ? formData.profilePicture : URL.createObjectURL(formData.profilePicture)}
+                alt="Profile preview"
+                className="h-24 w-24 rounded-lg object-cover border border-gray-300"
+              />
+            </div>
+          )}
+          <input
+            type="file"
+            name="profilePicture"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                onChange({ profilePicture: file })
+              }
+            }}
+            accept="image/*"
+            required
+            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50 cursor-pointer"
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-1">Upload a clear profile picture (JPG, PNG)</p>
       </div>
     </div>
   )
