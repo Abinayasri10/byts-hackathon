@@ -3,6 +3,8 @@ import LoginPage from './pages/LoginPage.jsx'
 import SignupPage from './pages/SignupPage.jsx'
 import ProfileSetupPage from './pages/ProfileSetupPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
+import EditProfilePage from './pages/EditProfilePage.jsx'
 import ShareExperienceLanding from './pages/ShareExperienceLanding.jsx'
 import ExperienceMetadataForm from './pages/ExperienceMetadataForm.jsx'
 import ExperienceRoundsForm from './pages/ExperienceRoundsForm.jsx'
@@ -22,6 +24,18 @@ function App() {
         <Route
           path="/home"
           element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/sampleprofilepage"
+          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
+        />
+        <Route
+          path="/profile"
+          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
+        />
+        <Route
+          path="/edit-profile"
+          element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>}
         />
         <Route
           path="/share-experience"
